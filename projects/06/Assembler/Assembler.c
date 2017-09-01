@@ -54,6 +54,25 @@ void exit_program(enum exitcode code, ...)
 }
 
 /*
+ * Try opening a file using fopen and quit the program if this fails. Just a
+ * wrapper for the fopen function.
+ */
+FILE *file_open_or_bail(const char *filename, const char *mode)
+{
+    FILE *fp = fopen(filename, mode);
+
+    if (fp == NULL) {
+        if (errno == 2) {
+            exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
+        } else {
+            exit_program(EXIT_CANNOT_OPEN_FILE, filename);
+        }
+    }
+
+    return fp;
+}
+
+/*
  * Strip a line from comments and remove *all* whitespace.
  * Comments are indicated by two adjacent / characters.
  *
@@ -85,6 +104,7 @@ char *strip_comments_and_whitespace(char *s) {
 }
 
 
+
 int main(int argc, const char *argv[])
 {
     if (argc != 2) {
@@ -95,18 +115,13 @@ int main(int argc, const char *argv[])
     char line[MAX_LINE_LEN + 1];
     unsigned instruction_num = 0;
 
-    FILE *fp = fopen(filename, "r");
-    if (fp == NULL) {
-        if (errno == 2) {
-            exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
-        } else {
-            exit_program(EXIT_CANNOT_OPEN_FILE, filename);
-        }
-    }
+    FILE *fp = file_open_or_bail(filename, "r");
 
     while (fgets(line, sizeof(line), fp)) {
         strip_comments_and_whitespace(line);
+
         if (!*line) {
+            // skip empty lines
             continue;
         }
 
