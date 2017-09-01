@@ -1,3 +1,4 @@
 projects/**/*.out
+projects/06/Assembler
 tools/bin/Hardware Simulator.dat
 tools/bin/CPU Emulator.dat
