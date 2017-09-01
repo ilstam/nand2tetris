@@ -2,9 +2,56 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <errno.h>
 
 #define MAX_LINE_LEN  200
+#define MAX_INSTRUCTIONS UINT_MAX
 
+
+enum exitcode {
+    /*
+     * Error code 1 represents that given file does not exist.
+     */
+	EXIT_FILE_DOES_NOT_EXIST = 1,
+    /*
+     * Error code 2 represents that given file couldn't be opened due to unknown reasons.
+     */
+	EXIT_CANNOT_OPEN_FILE = 2,
+    /*
+     * Error code 3 represents that more than 1 input files have been provided.
+     */
+    EXIT_MANY_FILES = 3,
+    /*
+     * Error code 4 represents that file contains too many instructions to be translated.
+     */
+	EXIT_TOO_MANY_INSTRUCTIONS = 4
+};
+
+const char *error_messages[] =
+{
+    [EXIT_CANNOT_OPEN_FILE] = "Can't open file %s",
+    [EXIT_FILE_DOES_NOT_EXIST] = "File %s does not exist",
+    [EXIT_MANY_FILES] = "One and only one file operand is expected",
+    [EXIT_TOO_MANY_INSTRUCTIONS] = "File contians too many instructions. "
+                                   "Only a maximum of %u instructions can be translated."
+};
+
+
+void exit_program(enum exitcode code, ...)
+{
+    va_list arguments;
+
+    va_start(arguments, code);
+
+    printf("%s: Error: ", __FILE__);
+    vfprintf(stdout, error_messages[code], arguments);
+    printf("\n");
+
+    va_end(arguments);
+    exit(code);
+}
 
 /*
  * Strip a line from comments and remove *all* whitespace.
@@ -37,31 +84,41 @@ char *strip_comments_and_whitespace(char *s) {
     return s;
 }
 
+
 int main(int argc, const char *argv[])
 {
     if (argc != 2) {
-        printf("%s: one and only one file operand is expected.\n", __FILE__);
-        exit(EXIT_FAILURE);
+        exit_program(EXIT_MANY_FILES);
     }
 
     const char *filename = argv[1];
     char line[MAX_LINE_LEN + 1];
+    unsigned instruction_num = 0;
 
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
-        printf("%s: Can't open file %s\n", __FILE__, filename);
-        exit(EXIT_FAILURE);
+        if (errno == 2) {
+            exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
+        } else {
+            exit_program(EXIT_CANNOT_OPEN_FILE, filename);
+        }
     }
 
     while (fgets(line, sizeof(line), fp)) {
         strip_comments_and_whitespace(line);
-        // Note: Maybe check for illegal characters as well here?
-        if (*line) {
-            puts(line);
+        if (!*line) {
+            continue;
+        }
+
+        puts(line);
+
+        instruction_num++;
+        if (instruction_num == MAX_INSTRUCTIONS) {
+            exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTIONS);
         }
     }
 
     fclose(fp);
 
-    return EXIT_SUCCESS;
+    return 0;
 }
