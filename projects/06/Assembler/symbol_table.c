@@ -6,6 +6,18 @@
 #include "utils.h"
 
 
+/*
+ * I use a linked list to hold the symbol table, because I was lazy to implement
+ * a hash map. So currently lookups to the table take O(n) time. I may improve
+ * this in the future by implementing a data structure with faster lookup times.
+ *
+ * Insertions happen at the back of the list. The rationale behind this is that
+ * some predefined symbols are inserted first in the table and we want access to
+ * these symbols to be as fast as possible, so we keep them at the front of the
+ * list. By keeping a tail pointer we ensure that insertions take O(1) time.
+ */
+
+
 struct table_entry {
     struct table_entry *next;
     char *name;
