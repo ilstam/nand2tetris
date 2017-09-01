@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
+
 #define MAX_LINE_LEN  200
 #define MAX_INSTRUCTIONS UINT_MAX
 
@@ -113,7 +114,7 @@ int main(int argc, const char *argv[])
 
     const char *filename = argv[1];
     char line[MAX_LINE_LEN + 1];
-    unsigned instruction_num = 0;
+    unsigned instruction_num = 1;
 
     FILE *fp = file_open_or_bail(filename, "r");
 
