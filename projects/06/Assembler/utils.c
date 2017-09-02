@@ -1,14 +1,15 @@
-#include <stdio.h>
 #include <stdlib.h>
+
+#include "exit.h"
 
 
 void *assembler_malloc(size_t size)
 {
-    void *ptr = NULL;
-    ptr = malloc(size);
+    void *ptr = malloc(size);
+
     if (ptr == NULL) {
-        printf("CRITICAL: Unable to allocate memory!\n");
-        exit(EXIT_FAILURE);
+        exit_program(EXIT_OUT_OF_MEMORY);
     }
+
     return ptr;
 }

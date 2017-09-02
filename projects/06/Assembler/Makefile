@@ -10,7 +10,7 @@ assembler.o: assembler.c symbol_table.h utils.h hack_standard.h exit.h
 symbol_table.o: symbol_table.c symbol_table.h utils.h hack_standard.h
 	$(CC) $(CFLAGS) symbol_table.c
 
-utils.o: utils.c utils.h
+utils.o: utils.c utils.h exit.h
 	$(CC) $(CFLAGS) utils.c
 
 exit.o: exit.c exit.h

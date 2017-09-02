@@ -10,7 +10,8 @@ const char *error_messages[] =
     [EXIT_FILE_DOES_NOT_EXIST] = "File %s does not exist",
     [EXIT_MANY_FILES] = "One and only one file operand is expected",
     [EXIT_TOO_MANY_INSTRUCTIONS] = "File contians too many instructions. "
-                                   "Only a maximum of %u instructions can be translated."
+                                   "Only a maximum of %u instructions can be translated.",
+    [EXIT_OUT_OF_MEMORY] = "CRITICAL: Unable to allocate memory!",
 };
 
 

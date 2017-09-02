@@ -18,7 +18,11 @@ enum exitcode {
     /*
      * Exit code 4 represents that file contains too many instructions to be translated.
      */
-    EXIT_TOO_MANY_INSTRUCTIONS = 4
+    EXIT_TOO_MANY_INSTRUCTIONS = 4,
+    /*
+     * Exit code 10 represents that the program run out of memory.
+     */
+    EXIT_OUT_OF_MEMORY = 10,
 };
 
 
