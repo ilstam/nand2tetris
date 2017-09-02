@@ -60,7 +60,7 @@ void symtab_add(SymbolTable table, const char *name, unsigned address)
     }
 }
 
-unsigned symtab_lookup(SymbolTable table, const char *name) {
+hack_addr symtab_lookup(SymbolTable table, const char *name) {
     TableEntry entry = table->head;
 
     for (; entry != NULL; entry = entry->next) {
@@ -69,7 +69,7 @@ unsigned symtab_lookup(SymbolTable table, const char *name) {
         }
     }
 
-    return SYMTAB_NOT_FOUND;
+    return SYMBOL_NOT_FOUND;
 }
 
 void symtab_destroy(SymbolTable table)

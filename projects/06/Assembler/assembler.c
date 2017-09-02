@@ -2,13 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <errno.h>
 
+#include "hack_standard.h"
 
 #define MAX_LINE_LEN  200
-#define MAX_INSTRUCTIONS UINT_MAX
+
+/*
+ * We cannot support more than MAX_ADDRESS instructions because we are not
+ * able to address them.
+ */
+#define MAX_INSTRUCTIONS MAX_HACK_ADDRESS
 
 
 enum exitcode {
@@ -103,7 +108,6 @@ char *strip_comments_and_whitespace(char *s) {
 
     return s;
 }
-
 
 
 int main(int argc, const char *argv[])

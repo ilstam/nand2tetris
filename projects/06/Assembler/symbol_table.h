@@ -1,6 +1,8 @@
 #pragma once
 
-#define SYMTAB_NOT_FOUND 0
+#include "hack_standard.h"
+
+#define SYMBOL_NOT_FOUND -1
 
 
 typedef struct symbol_table *SymbolTable;
@@ -26,10 +28,10 @@ void symtab_add(SymbolTable table, const char *name, unsigned address);
 /**
  * Search for a symbol in the symbol table.
  *
- * retval - Symbol's corresponding address if symbol exists in the table.
- *          SYMTAB_NOT_FOUND if symbol doesn't exist in the table.
+ * retval - Symbol's corresponding hack address if symbol exists in the table.
+ *          SYMBOL_NOT_FOUND if symbol doesn't exist in the table.
  */
-unsigned symtab_lookup(SymbolTable table, const char *name);
+hack_addr symtab_lookup(SymbolTable table, const char *name);
 
 /**
  * Indicate you are complete with the symbol table. Free and delete any
