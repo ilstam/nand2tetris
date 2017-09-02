@@ -7,16 +7,18 @@
 
 #include "symbol_table.h"
 #include "hack_standard.h"
+#include "utils.h"
 #include "exit.h"
 
 #define MAX_LINE_LEN  200
 #define MAX_LABEL_LEN 198
+#define INITIAL_ALLOCATED_MEMORY 400
 
 /*
- * We cannot support more than MAX_ADDRESS instructions because we are not
- * able to address them.
+ * We cannot support more than MAX_HACK_ADDRESS instructions because we are
+ * not able to address them.
  */
-#define MAX_INSTRUCTIONS MAX_HACK_ADDRESS
+#define MAX_INSTRUCTION MAX_HACK_ADDRESS
 
 
 /*
@@ -130,14 +132,40 @@ int main(int argc, const char *argv[])
     }
 
     const char *filename = argv[1];
-    char line[MAX_LINE_LEN + 1];
-    char label[MAX_LABEL_LEN + 1];
+
+    /*
+     * Indicates number of current instruction.
+     * We count only real instructions, not empty lines, comments nor labels.
+     */
     unsigned instruction_num = 0;
+    /*
+     * A buffer keeping all real instructions striped from unnecessary symbols.
+     */
+    char **all_lines;
+    /*
+     * This indicates for how many lines of instructions we have allocated
+     * memory. We store instructions read from the file in memory after
+     * striping them from comments and whitespace for later processing.
+     * Whenever we hit this limit and need to store more instructions in
+     * memory we double this value.
+    */
+    unsigned allocated_mem = INITIAL_ALLOCATED_MEMORY;
+    /*
+     * Keeps current line read.
+     */
+    char line[MAX_LINE_LEN + 1];
+    /*
+     * Used to temporarily store the label of the current instruction, if
+     * the current instruction declares a new label.
+     */
+    char label[MAX_LABEL_LEN + 1];
 
     FILE *fp = file_open_or_bail(filename, "r");
 
     SymbolTable symtab = symtab_init();
     populate_predefined_symbols(symtab);
+
+    all_lines = assembler_malloc(INITIAL_ALLOCATED_MEMORY * sizeof(char *));
 
     /* First pass */
 
@@ -154,21 +182,37 @@ int main(int argc, const char *argv[])
             continue;
         }
 
-        puts(line);
+        if (instruction_num == allocated_mem) {
+            // We need more memory for storing lines. Double what we already have.
+            unsigned tmp = allocated_mem * 2;
+            allocated_mem = tmp > MAX_INSTRUCTION ? MAX_INSTRUCTION : tmp;
+            all_lines = assembler_realloc(all_lines, allocated_mem * sizeof(char *));
+        }
+
+        all_lines[instruction_num] = assembler_malloc(strlen(line) + 1);
+        strcpy(all_lines[instruction_num], line);
 
         instruction_num++;
-        if (instruction_num == MAX_INSTRUCTIONS) {
-            exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTIONS);
+        if (instruction_num == MAX_INSTRUCTION) {
+            exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTION);
         }
     }
 
-    symtab_print(symtab);
+    fclose(fp);
+
+    // Reduce allocated memory to the amount of memory that we really need
+    // for storing all instructions read.
+    all_lines = assembler_realloc(all_lines, instruction_num * sizeof(char *));
 
     /* Second pass */
-    /* ... */
 
-    fclose(fp);
+    for (unsigned i = 0; i < instruction_num; i++) {
+        puts(all_lines[i]);
+        free(all_lines[i]);
+    }
+
     symtab_destroy(symtab);
+    free(all_lines);
 
     return 0;
 }

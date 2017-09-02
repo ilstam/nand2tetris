@@ -13,3 +13,15 @@ void *assembler_malloc(size_t size)
 
     return ptr;
 }
+
+void *assembler_realloc(void *ptr, size_t size)
+{
+    void *tmp = realloc(ptr, size);
+
+    if (tmp == NULL) {
+        exit_program(EXIT_OUT_OF_MEMORY);
+    }
+
+    ptr = tmp;
+    return ptr;
+}
