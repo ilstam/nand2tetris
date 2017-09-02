@@ -23,7 +23,7 @@ SymbolTable symtab_init(void);
  *
  * If this fail, the program will terminate.
  */
-void symtab_add(SymbolTable table, const char *name, unsigned address);
+void symtab_add(SymbolTable table, const char *name, hack_addr address);
 
 /**
  * Search for a symbol in the symbol table.

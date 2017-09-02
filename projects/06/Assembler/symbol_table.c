@@ -21,7 +21,7 @@
 struct table_entry {
     struct table_entry *next;
     char *name;
-    unsigned address;
+    hack_addr address;
 };
 
 typedef struct table_entry *TableEntry;
@@ -41,7 +41,7 @@ SymbolTable symtab_init(void)
     return table;
 }
 
-void symtab_add(SymbolTable table, const char *name, unsigned address)
+void symtab_add(SymbolTable table, const char *name, hack_addr address)
 {
     TableEntry new_entry = assembler_malloc(sizeof(struct table_entry));
 
