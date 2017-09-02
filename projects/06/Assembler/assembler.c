@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdarg.h>
 #include <errno.h>
 
 #include "hack_standard.h"
+#include "exit.h"
 
 #define MAX_LINE_LEN  200
 
@@ -15,49 +15,6 @@
  */
 #define MAX_INSTRUCTIONS MAX_HACK_ADDRESS
 
-
-enum exitcode {
-    /*
-     * Error code 1 represents that given file does not exist.
-     */
-	EXIT_FILE_DOES_NOT_EXIST = 1,
-    /*
-     * Error code 2 represents that given file couldn't be opened due to unknown reasons.
-     */
-	EXIT_CANNOT_OPEN_FILE = 2,
-    /*
-     * Error code 3 represents that more than 1 input files have been provided.
-     */
-    EXIT_MANY_FILES = 3,
-    /*
-     * Error code 4 represents that file contains too many instructions to be translated.
-     */
-	EXIT_TOO_MANY_INSTRUCTIONS = 4
-};
-
-const char *error_messages[] =
-{
-    [EXIT_CANNOT_OPEN_FILE] = "Can't open file %s",
-    [EXIT_FILE_DOES_NOT_EXIST] = "File %s does not exist",
-    [EXIT_MANY_FILES] = "One and only one file operand is expected",
-    [EXIT_TOO_MANY_INSTRUCTIONS] = "File contians too many instructions. "
-                                   "Only a maximum of %u instructions can be translated."
-};
-
-
-void exit_program(enum exitcode code, ...)
-{
-    va_list arguments;
-
-    va_start(arguments, code);
-
-    printf("%s: Error: ", __FILE__);
-    vfprintf(stdout, error_messages[code], arguments);
-    printf("\n");
-
-    va_end(arguments);
-    exit(code);
-}
 
 /*
  * Try opening a file using fopen and quit the program if this fails. Just a
