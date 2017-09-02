@@ -39,3 +39,8 @@ hack_addr symtab_lookup(SymbolTable table, const char *name);
  * dispose of the symbol table.
  */
 void symtab_destroy(SymbolTable table);
+
+/**
+ * Display all symbols along with their corresponding addresses.
+ */
+void symtab_print(SymbolTable table);

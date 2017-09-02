@@ -84,3 +84,18 @@ void symtab_destroy(SymbolTable table)
 
     free(table);
 }
+
+void symtab_print(SymbolTable table)
+{
+    printf("     SYMBOL TABLE\n");
+    printf("----------------------\n");
+
+    TableEntry entry = table->head;
+    if (entry == NULL) {
+        printf("Symbol table is empty.\n");
+    }
+
+    for (; entry != NULL; entry = entry->next) {
+        printf("%-*s %d\n", 20, entry->name, entry->address);
+    }
+}

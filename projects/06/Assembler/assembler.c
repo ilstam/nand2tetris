@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -9,6 +10,7 @@
 #include "exit.h"
 
 #define MAX_LINE_LEN  200
+#define MAX_LABEL_LEN 198
 
 /*
  * We cannot support more than MAX_ADDRESS instructions because we are not
@@ -68,6 +70,35 @@ char *strip_comments_and_whitespace(char *s) {
 }
 
 /**
+ * Parse a line and check whether it defines a label. If so, store label's
+ * name in the label paremeter and return true. Else return false.
+ * If the return value is false, the contents of the label argument shall not
+ * be accessed.
+ */
+bool is_label(const char *line, char *label)
+{
+    const char *s = line;
+    const char *s_end = s + strlen(line) - 1;
+
+    if (*s != '(') {
+        return false;
+    }
+    if (*s_end != ')') {
+        return false;
+    }
+
+    for (s=s+1; s < s_end; s++) {
+        if (*s == '(' || *s == ')') {
+            return false;
+        }
+        *label++ = *s;
+    }
+    *label = '\0';
+
+    return true;
+}
+
+/**
  * Populate some predefined symbols in the symbol table.
  */
 void populate_predefined_symbols(SymbolTable table)
@@ -100,18 +131,26 @@ int main(int argc, const char *argv[])
 
     const char *filename = argv[1];
     char line[MAX_LINE_LEN + 1];
-    unsigned instruction_num = 1;
+    char label[MAX_LABEL_LEN + 1];
+    unsigned instruction_num = 0;
 
     FILE *fp = file_open_or_bail(filename, "r");
 
     SymbolTable symtab = symtab_init();
     populate_predefined_symbols(symtab);
 
+    /* First pass */
+
     while (fgets(line, sizeof(line), fp)) {
         strip_comments_and_whitespace(line);
 
         if (!*line) {
             // skip empty lines
+            continue;
+        }
+
+        if (is_label(line, label)) {
+            symtab_add(symtab, label, instruction_num);
             continue;
         }
 
@@ -122,6 +161,11 @@ int main(int argc, const char *argv[])
             exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTIONS);
         }
     }
+
+    symtab_print(symtab);
+
+    /* Second pass */
+    /* ... */
 
     fclose(fp);
     symtab_destroy(symtab);
