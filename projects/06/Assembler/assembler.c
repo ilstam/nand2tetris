@@ -16,12 +16,6 @@
 #define MAX_LABEL_LEN 198
 #define INITIAL_ALLOCATED_MEMORY 400
 
-/*
- * We cannot support more than MAX_HACK_ADDRESS instructions because we are
- * not able to address them.
- */
-#define MAX_INSTRUCTION MAX_HACK_ADDRESS
-
 
 /*
  * Check whether the given path corresponds to a regular file and if that's
@@ -112,19 +106,6 @@ bool is_label(const char *line, char *label)
  */
 void populate_predefined_symbols(SymbolTable table)
 {
-    struct predef_symbol {
-        char name[50+1];
-        hack_addr address;
-    };
-
-    struct predef_symbol predef_symbols[NUM_PREDEFINED_SYMS] = {
-        {"R0", 0}, {"R1", 1}, {"R2", 2}, {"R3", 3}, {"R4", 4}, {"R5", 5},
-        {"R6", 6}, {"R7", 7}, {"R8", 8}, {"R9", 9}, {"R10", 10}, {"R11", 11},
-        {"R12", 12}, {"R13", 13}, {"R14", 14}, {"R15", 15}, {"SCREEN", 16384},
-        {"KBD", 24576}, {"SP", 0}, {"LCL", 1}, {"ARG", 2}, {"THIS", 3},
-        {"THAT", 4},
-    };
-
     for (int i = 0; i < NUM_PREDEFINED_SYMS; i++) {
         struct predef_symbol s = predef_symbols[i];
         symtab_add(table, s.name, s.address);
