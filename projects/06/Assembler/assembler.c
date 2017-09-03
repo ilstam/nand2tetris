@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -14,7 +15,7 @@
 
 #define MAX_LINE_LEN  200
 #define MAX_LABEL_LEN 198
-#define INITIAL_ALLOCATED_MEMORY 400
+#define INIT_MEMORY_ALLOC 400
 
 
 /*
@@ -112,6 +113,30 @@ void populate_predefined_symbols(SymbolTable table)
     }
 }
 
+/*
+ * Parse an A-instruction and determine if it is valid or not. Store the
+ * operand (the after @ part) as a string in the instruction in either case.
+ * Invalid commands are those that the operand begins with digit(s) but
+ * contains other characters as well. All other commands are valid.
+ *
+ * Examples:
+ * Return true for "5439", "LOOP", "SYMBOL123", "L99P"
+ * Return false for "1ABC", "1234LOOP"
+ */
+bool parse_A_instruction(const char *line, a_inst *instruction)
+{
+    // +1 in malloc not needed because we don't store 1st char
+    *instruction = assembler_malloc(strlen(line));
+    strcpy(*instruction, line+1);
+
+    char *endptr = NULL;
+    strtol(*instruction, &endptr, 10);
+    if (*instruction != endptr && errno == 0 && *endptr != 0) {
+        return false;
+    }
+    return true;
+}
+
 
 int main(int argc, const char *argv[])
 {
@@ -123,23 +148,30 @@ int main(int argc, const char *argv[])
 
     /*
      * Indicates number of current instruction.
-     * We count only real instructions, not empty lines, comments nor labels.
+     * This counts only real instructions, not empty lines, comments nor labels.
      */
     unsigned instruction_num = 0;
     /*
-     * A buffer keeping all real instructions striped from unnecessary symbols.
+     * Indicates current file line that is being processed.
      */
-    char **all_lines;
+    unsigned line_num = 0;
     /*
-     * This indicates for how many lines of instructions we have allocated
-     * memory. We store instructions read from the file in memory after
-     * striping them from comments and whitespace for later processing.
-     * Whenever we hit this limit and need to store more instructions in
-     * memory we double this value.
-    */
-    unsigned allocated_mem = INITIAL_ALLOCATED_MEMORY;
+     * Holds current instruction.
+     */
+    generic_inst inst;
     /*
-     * Keeps current line read.
+     * A buffer keeping all valid instructions after reading them from the file.
+     */
+    generic_inst *instructions = NULL;
+    /*
+     * This indicates for how many instructions we have allocated memory.
+     * Initially we allocate INIT_MEMORY_ALLOC memory and later, whenever we
+     * hit this limit and need to store more instructions in memory we double
+     * this value.
+     */
+    unsigned allocated_mem = 0;
+    /*
+     * Holds current line read.
      */
     char line[MAX_LINE_LEN + 1];
     /*
@@ -153,11 +185,10 @@ int main(int argc, const char *argv[])
     SymbolTable symtab = symtab_init();
     populate_predefined_symbols(symtab);
 
-    all_lines = assembler_malloc(INITIAL_ALLOCATED_MEMORY * sizeof(char *));
-
     /* First pass */
 
     while (fgets(line, sizeof(line), fp)) {
+        line_num++;
         if (instruction_num > MAX_INSTRUCTION) {
             exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTION + 1);
         }
@@ -174,34 +205,45 @@ int main(int argc, const char *argv[])
             continue;
         }
 
-        if (instruction_num == allocated_mem) {
-            // We need more memory for storing lines. Double what we already have.
-            unsigned tmp = allocated_mem * 2;
-            allocated_mem = tmp > MAX_INSTRUCTION ? MAX_INSTRUCTION : tmp;
-            all_lines = assembler_realloc(all_lines, allocated_mem * sizeof(char *));
+        if (*line == '@') {
+            if (!parse_A_instruction(line, &inst.inst.a)) {
+                exit_program(EXIT_INVALID_A_INST, line_num, line);
+            }
+            inst.id = INST_A;
+        } else {
+            // parse C-instruction
+            inst.id = INST_C;
         }
 
-        all_lines[instruction_num] = assembler_malloc(strlen(line) + 1);
-        strcpy(all_lines[instruction_num], line);
+        if (instruction_num == allocated_mem) {
+            // We need more memory for storing instructions.
+            // Double what we already have or make our first allocation of default value.
+            unsigned tmp = allocated_mem ? allocated_mem * 2 : INIT_MEMORY_ALLOC;
+            allocated_mem = tmp > MAX_INSTRUCTION ? MAX_INSTRUCTION : tmp;
+            instructions = assembler_realloc(instructions, allocated_mem * sizeof(generic_inst));
+        }
 
-        instruction_num++;
+        instructions[instruction_num++] = inst;
     }
 
     fclose(fp);
 
-    // Reduce allocated memory to the amount of memory that we really need
-    // for storing all instructions read.
-    all_lines = assembler_realloc(all_lines, instruction_num * sizeof(char *));
+    // Reduce allocated memory to the amount of memory that we really need for
+    // storing all instructions read.
+    instructions = assembler_realloc(instructions, instruction_num * sizeof(generic_inst));
 
     /* Second pass */
 
     for (unsigned i = 0; i < instruction_num; i++) {
-        puts(all_lines[i]);
-        free(all_lines[i]);
+        inst = instructions[i];
+        if (inst.id == INST_A) {
+            puts(inst.inst.a);
+            free(inst.inst.a);
+        }
     }
 
     symtab_destroy(symtab);
-    free(all_lines);
+    free(instructions);
 
     return 0;
 }

@@ -24,6 +24,10 @@ enum exitcode {
      */
     EXIT_TOO_MANY_INSTRUCTIONS = 7,
     /*
+     * Exit code 8 represents that an invalid A-instruction have been encountered.
+     */
+    EXIT_INVALID_A_INST = 8,
+    /*
      * Exit code 10 represents that the program run out of memory.
      */
     EXIT_OUT_OF_MEMORY = 10,

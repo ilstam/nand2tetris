@@ -12,6 +12,7 @@ const char *error_messages[] =
     [EXIT_MANY_FILES] = "One and only one file operand is expected",
     [EXIT_TOO_MANY_INSTRUCTIONS] = "File contains too many instructions. "
                                    "Only a maximum of %u instructions can be translated.",
+    [EXIT_INVALID_A_INST] = "Line %u: %s : Invalid A-instruction operand",
     [EXIT_OUT_OF_MEMORY] = "CRITICAL: Unable to allocate memory!",
 };
 
@@ -22,7 +23,7 @@ void exit_program(enum exitcode code, ...)
 
     va_start(arguments, code);
 
-    printf("%s: Error: ", __FILE__);
+    printf("Assembler: ERROR: ");
     vfprintf(stdout, error_messages[code], arguments);
     printf("\n");
 
