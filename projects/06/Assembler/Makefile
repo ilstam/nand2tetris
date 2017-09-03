@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O -Wall -W -pedantic -ansi -std=c99 -ggdb3 -c
+CFLAGS=-O -Wall -W -pedantic -ansi -std=c99 -ggdb3 -c -O0
 
 assembler: assembler.o symbol_table.o utils.o exit.o
 	$(CC) -o assembler assembler.o symbol_table.o utils.o exit.o

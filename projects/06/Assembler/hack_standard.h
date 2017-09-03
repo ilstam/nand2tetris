@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <stdbool.h>
 
 
 #define MAX_HACK_ADDRESS INT16_MAX
@@ -46,21 +47,27 @@ typedef enum inst_id {
 } inst_id;
 
 /*
- * Stores a string that represents either a symbol or a numerical address.
- * We do NOT store the @ symbol of the instruction.
- * e.g. possible values: "LOOP" or "13241"
- *
  * The opcode of an A-instruction is a 0 bit, followed by a 15-bit address.
  * Sometimes we are just provided with a symbol's name instead of a direct
  * address, and we use this symbol to resolve the real address later.
+ *
+ * When resolved is true that means that we already have a numerical address.
+ * When false, the symbol field holds a string that represents a symbol's name.
  */
-typedef char *a_inst;
+typedef struct a_inst {
+    union {
+        char *symbol;
+        hack_addr address;
+    } operand;
+    bool resolved;
+} a_inst;
 
 /*
  * The opcode of a C-instruction is the following:
  * 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
  */
 typedef struct c_inst {
+    int16_t prefix:3;
     int16_t a:1;
     int16_t comp:6;
     int16_t dest:3;

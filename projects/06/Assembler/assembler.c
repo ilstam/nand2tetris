@@ -115,25 +115,40 @@ void populate_predefined_symbols(SymbolTable table)
 
 /*
  * Parse an A-instruction and determine if it is valid or not. Store the
- * operand (the after @ part) as a string in the instruction in either case.
- * Invalid commands are those that the operand begins with digit(s) but
- * contains other characters as well. All other commands are valid.
+ * operand (the after @ part) either as string or as a hack address in the
+ * instruction. Invalid instructions are those that the operand begins with
+ * digit(s) but contains other characters as well. All other instructions are
+ * valid. Return true when instruction is valid, else false.
  *
  * Examples:
- * Return true for "5439", "LOOP", "SYMBOL123", "L99P"
- * Return false for "1ABC", "1234LOOP"
+ * Return true for "@5439", "@LOOP", "@SYMBOL123", "@L99P"
+ * Return false for "@1ABC", "@1234LOOP"
  */
-bool parse_A_instruction(const char *line, a_inst *instruction)
+bool parse_A_instruction(const char *line, a_inst *inst)
 {
     // +1 in malloc not needed because we don't store 1st char
-    *instruction = assembler_malloc(strlen(line));
-    strcpy(*instruction, line+1);
+    inst->operand.symbol = assembler_malloc(strlen(line));
+    char *s = inst->operand.symbol;
+    strcpy(s, line+1);
 
     char *endptr = NULL;
-    strtol(*instruction, &endptr, 10);
-    if (*instruction != endptr && errno == 0 && *endptr != 0) {
+    hack_addr result = strtol(s, &endptr, 10);
+
+    if (s == endptr) {
+        // operand is a symbol
+        inst->resolved = false;
+        return true;
+    } else if (errno == 0 && *endptr != 0) {
+        // operand is invalid; begins with digit(s) but continues with other chars
+        free(inst->operand.symbol);
         return false;
+    } else {
+        // operand is a number
+        free(inst->operand.symbol);
+        inst->operand.address = result;
+        inst->resolved = true;
     }
+
     return true;
 }
 
@@ -237,8 +252,12 @@ int main(int argc, const char *argv[])
     for (unsigned i = 0; i < instruction_num; i++) {
         inst = instructions[i];
         if (inst.id == INST_A) {
-            puts(inst.inst.a);
-            free(inst.inst.a);
+            if (! inst.inst.a.resolved) {
+                puts(inst.inst.a.operand.symbol);
+                free(inst.inst.a.operand.symbol);
+            } else {
+                printf("%u\n", inst.inst.a.operand.address);;
+            }
         }
     }
 
