@@ -3,7 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "symbol_table.h"
 #include "hack_standard.h"
@@ -22,19 +24,24 @@
 
 
 /*
- * Try opening a file using fopen and quit the program if this fails. Just a
- * wrapper for the fopen function.
+ * Check whether the given path corresponds to a regular file and if that's
+ * the case try to open the file using fopen.
  */
 FILE *file_open_or_bail(const char *filename, const char *mode)
 {
+    struct stat path_stat;
+
+    if (stat(filename, &path_stat) != 0) {
+        exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
+    }
+    if(!S_ISREG(path_stat.st_mode)) {
+        exit_program(EXIT_NOT_REGULAR_FILE, filename);
+    }
+
     FILE *fp = fopen(filename, mode);
 
     if (fp == NULL) {
-        if (errno == 2) {
-            exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
-        } else {
-            exit_program(EXIT_CANNOT_OPEN_FILE, filename);
-        }
+        exit_program(EXIT_CANNOT_OPEN_FILE, filename);
     }
 
     return fp;
@@ -170,6 +177,10 @@ int main(int argc, const char *argv[])
     /* First pass */
 
     while (fgets(line, sizeof(line), fp)) {
+        if (instruction_num > MAX_INSTRUCTION) {
+            exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTION + 1);
+        }
+
         strip_comments_and_whitespace(line);
 
         if (!*line) {
@@ -193,9 +204,6 @@ int main(int argc, const char *argv[])
         strcpy(all_lines[instruction_num], line);
 
         instruction_num++;
-        if (instruction_num == MAX_INSTRUCTION) {
-            exit_program(EXIT_TOO_MANY_INSTRUCTIONS, MAX_INSTRUCTION);
-        }
     }
 
     fclose(fp);
