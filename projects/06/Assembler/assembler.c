@@ -152,6 +152,23 @@ bool parse_A_instruction(const char *line, a_inst *inst)
     return true;
 }
 
+/*
+ * Parse a C-instruction and split it into its three parts; dest, comp and jmp.
+ * For each part that is missing set the corresponding pointer to NULL.
+ */
+void parse_C_instruction(char *line, char **dest, char **comp, char **jmp)
+{
+    char *tmp = strtok(line, ";");
+    *jmp = strtok(NULL, "");
+    *dest = strtok(tmp, "=");
+    *comp = strtok(NULL, "");
+
+    if (*comp == NULL) {
+        *comp = *dest;
+        *dest = NULL;
+    }
+}
+
 
 int main(int argc, const char *argv[])
 {
@@ -187,6 +204,7 @@ int main(int argc, const char *argv[])
      * Holds current line read.
      */
     char line[MAX_LINE_LEN + 1];
+    char tmp_line[MAX_LINE_LEN + 1];
     /*
      * Used to temporarily store the label of the current instruction, if
      * the current instruction declares a new label.
@@ -230,7 +248,12 @@ int main(int argc, const char *argv[])
             }
             inst.id = INST_A;
         } else {
-            // parse C-instruction
+            char *dest = NULL;
+            char *comp = NULL;
+            char *jmp = NULL;
+
+            strcpy(tmp_line, line); // safe because they have same lengths
+            parse_C_instruction(tmp_line, &dest, &comp, &jmp);
             inst.id = INST_C;
         }
 
