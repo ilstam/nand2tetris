@@ -253,19 +253,19 @@ int main(int argc, const char *argv[])
 
     /* Second pass */
 
+    printf("Translating A instructions only...\n");
     for (unsigned i = 0; i < instruction_num; i++) {
         inst = instructions[i];
         if (inst.id == INST_A) {
             hack_addr addr;
             if (! inst.inst.a.resolved) {
                 addr = symtab_resolve(symtab, inst.inst.a.operand.symbol);
-                printf(inst.inst.a.operand.symbol);
-                printf(" -->  ");
                 free(inst.inst.a.operand.symbol);
             } else {
                 addr = inst.inst.a.operand.address;
             }
-            printf("%d\n", addr);
+            /*printf("%d\n", addr);*/
+            printf(OPCODE_STR"\n", OPCODE_TO_BINARY(addr));
         }
     }
 
