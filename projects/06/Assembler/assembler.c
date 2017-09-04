@@ -216,6 +216,12 @@ int main(int argc, const char *argv[])
         }
 
         if (is_label(line, label)) {
+            if (!isalpha(*label)) {
+                exit_program(EXIT_INVALID_LABEL, line_num, line);
+            }
+            if (symtab_lookup(symtab, label) != SYMBOL_NOT_FOUND) {
+                exit_program(EXIT_SYMBOL_ALREADY_EXISTS, line_num, line);
+            }
             symtab_add(symtab, label, instruction_num);
             continue;
         }

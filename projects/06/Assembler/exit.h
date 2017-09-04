@@ -24,13 +24,21 @@ enum exitcode {
      */
     EXIT_TOO_MANY_INSTRUCTIONS = 7,
     /*
-     * Exit code 8 represents that an invalid A-instruction have been encountered.
+     * Exit code 8 represents that there was an attempt to redefine a symbol.
      */
-    EXIT_INVALID_A_INST = 8,
+    EXIT_SYMBOL_ALREADY_EXISTS = 8,
     /*
-     * Exit code 10 represents that the program run out of memory.
+     * Exit code 9 represents that an invalid label have been encountered.
      */
-    EXIT_OUT_OF_MEMORY = 10,
+    EXIT_INVALID_LABEL = 9,
+    /*
+     * Exit code 10 represents that an invalid A-instruction have been encountered.
+     */
+    EXIT_INVALID_A_INST = 10,
+    /*
+     * Exit code 15 represents that the program run out of memory.
+     */
+    EXIT_OUT_OF_MEMORY = 15,
 };
 
 

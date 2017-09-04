@@ -16,10 +16,10 @@ typedef struct symbol_table *SymbolTable;
 SymbolTable symtab_init(void);
 
 /**
- * Add a new symbol name - address pair in the symbol table.
+ * Add a new symbol name-address pair in the symbol table.
  *
- * This does NOT make any checks on the inputs, so you can insert the same
- * name or address more than once (you shouldn't though).
+ * WARNING: This does NOT check whether the symbol already exist in the table,
+ * so it is possible to insert the same symbol twice (which you shall not do).
  *
  * If this fail, the program will terminate.
  */
