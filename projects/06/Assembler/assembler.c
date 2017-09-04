@@ -159,8 +159,6 @@ int main(int argc, const char *argv[])
         exit_program(EXIT_MANY_FILES);
     }
 
-    const char *filename = argv[1];
-
     /*
      * Indicates number of current instruction.
      * This counts only real instructions, not empty lines, comments nor labels.
@@ -195,7 +193,7 @@ int main(int argc, const char *argv[])
      */
     char label[MAX_LABEL_LEN + 1];
 
-    FILE *fp = file_open_or_bail(filename, "r");
+    FILE *fp = file_open_or_bail(argv[1], "r");
 
     SymbolTable symtab = symtab_init();
     populate_predefined_symbols(symtab);
