@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "symbol_table.h"
 #include "utils.h"
@@ -73,8 +74,32 @@ hack_addr symtab_lookup(SymbolTable table, const char *name) {
     return SYMBOL_NOT_FOUND;
 }
 
-static hack_addr symtab_get_next_avail_addr(void) {
+/**
+ * Return true if the given address is already assigned to some symbol in the
+ * symbol table, else false.
+ */
+static bool symtab_address_assigned(SymbolTable table, hack_addr address) {
+    TableEntry entry = table->head;
+
+    for (; entry != NULL; entry = entry->next) {
+        if (entry->address == address) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Return the next available hack address that can be assigned to a new symbol.
+ */
+static hack_addr symtab_get_next_avail_addr(SymbolTable table) {
     static hack_addr address = 16;
+
+    while (symtab_address_assigned(table, address)) {
+        address++;
+    }
+
     return address++;
 }
 
@@ -82,12 +107,13 @@ hack_addr symtab_resolve(SymbolTable table, const char *name) {
     hack_addr address = symtab_lookup(table, name);
 
     if (address == SYMBOL_NOT_FOUND) {
-        address = symtab_get_next_avail_addr();
+        address = symtab_get_next_avail_addr(table);
         symtab_add(table, name, address);
     }
 
     return address;
 }
+
 
 void symtab_destroy(SymbolTable table)
 {
