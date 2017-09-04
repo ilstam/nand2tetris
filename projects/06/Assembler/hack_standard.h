@@ -64,6 +64,195 @@ static const predef_symbol predef_symbols[NUM_PREDEFINED_SYMS] = {
     {"THAT", SYM_THAT},
 };
 
+
+typedef enum jump_id {
+    JMP_INVALID= -1,
+    JMP_NULL,
+    JMP_JGT,
+    JMP_JEQ,
+    JMP_JGE,
+    JMP_JLT,
+    JMP_JNE,
+    JMP_JLE,
+    JMP_JMP,
+} jump_id;
+
+typedef enum dest_id {
+    DEST_INVALID = -1,
+    DEST_NULL,
+    DEST_M,
+    DEST_D,
+    DEST_MD,
+    DEST_A,
+    DEST_AM,
+    DEST_AD,
+    DEST_AMD,
+} dest_id;
+
+typedef enum comp_id {
+    COMP_INVALID = -1,
+
+    /* for a = 0 */
+
+    COMP_0 = 42,
+    COMP_1 = 63,
+    COMP_MINUS_1 = 58,
+    COMP_D = 12,
+    COMP_A = 48,
+    COMP_NOT_D = 13,
+    COMP_NOT_A = 49,
+    COMP_MINUS_D = 15,
+    COMP_MINUS_A = 51,
+    COMP_D_PLUS_1 = 41,
+    COMP_A_PLUS_1 = 55,
+    COMP_D_MINUS_1 = 14,
+    COMP_A_MINUS_1 = 50,
+    COMP_D_PLUS_A = 2,
+    COMP_D_MINUS_A = 3,
+    COMP_A_MINUS_D = 7,
+    COMP_D_AND_A = 0,
+    COMP_D_OR_A = 21,
+
+    /* for a = 1 */
+
+    COMP_M = 48,
+    COMP_NOT_M = 49,
+    COMP_MINUS_M = 51,
+    COMP_M_PLUS_1 = 55,
+    COMP_M_MINUS_1 = 50,
+    COMP_D_PLUS_M = 2,
+    COMP_D_MINUS_M = 3,
+    COMP_M_MINUS_D = 7,
+    COMP_D_AND_M = 0,
+    COMP_D_OR_M = 21,
+} comp_id;
+
+inline dest_id str_to_destid(const char *s)
+{
+    dest_id id = DEST_INVALID;
+
+    if (s == NULL) {
+        id = DEST_NULL;
+    } else if (!strcmp(s, "M")) {
+        id = DEST_M;
+    } else if (!strcmp(s, "D")) {
+        id = DEST_D;
+    } else if (!strcmp(s, "MD")) {
+        id = DEST_MD;
+    } else if (!strcmp(s, "A")) {
+        id = DEST_A;
+    } else if (!strcmp(s, "AM")) {
+        id = DEST_AM;
+    } else if (!strcmp(s, "AD")) {
+        id = DEST_AD;
+    } else if (!strcmp(s, "AMD")) {
+        id = DEST_AMD;
+    }
+
+    return id;
+}
+
+inline comp_id str_to_compid(const char *s, int *a)
+{
+    comp_id id = COMP_INVALID;
+
+    if (s == NULL) {
+        return id;
+    } else if (!strcmp(s, "0")) {
+        id = COMP_0;
+    } else if (!strcmp(s, "1")) {
+        id = COMP_1;
+    } else if (!strcmp(s, "-1")) {
+        id = COMP_MINUS_1;
+    } else if (!strcmp(s, "D")) {
+        id = COMP_D;
+    } else if (!strcmp(s, "A")) {
+        id = COMP_A;
+    } else if (!strcmp(s, "!D")) {
+        id = COMP_NOT_D;
+    } else if (!strcmp(s, "!A")) {
+        id = COMP_NOT_A;
+    } else if (!strcmp(s, "-D")) {
+        id = COMP_MINUS_D;
+    } else if (!strcmp(s, "-A")) {
+        id = COMP_MINUS_A;
+    } else if (!strcmp(s, "D+1")) {
+        id = COMP_D_PLUS_1;
+    } else if (!strcmp(s, "A+1")) {
+        id = COMP_A_PLUS_1;
+    } else if (!strcmp(s, "D-1")) {
+        id = COMP_D_MINUS_1;
+    } else if (!strcmp(s, "A-1")) {
+        id = COMP_A_MINUS_1;
+    } else if (!strcmp(s, "D+A")) {
+        id = COMP_D_PLUS_A;
+    } else if (!strcmp(s, "D-A")) {
+        id = COMP_D_MINUS_A;
+    } else if (!strcmp(s, "A-D")) {
+        id = COMP_A_MINUS_D;
+    } else if (!strcmp(s, "D&A")) {
+        id = COMP_D_AND_A;
+    } else if (!strcmp(s, "D|A")) {
+        id = COMP_D_OR_A;
+    }
+
+    if (id != COMP_INVALID) {
+        *a = 0;
+        return id;
+    }
+
+    if (!strcmp(s, "M")) {
+        id = COMP_M;
+    } else if (!strcmp(s, "!M")) {
+        id = COMP_NOT_M;
+    } else if (!strcmp(s, "-M")) {
+        id = COMP_MINUS_M;
+    } else if (!strcmp(s, "M+1")) {
+        id = COMP_M_PLUS_1;
+    } else if (!strcmp(s, "M-1")) {
+        id = COMP_M_MINUS_1;
+    } else if (!strcmp(s, "D+M")) {
+        id = COMP_D_PLUS_M;
+    } else if (!strcmp(s, "D-M")) {
+        id = COMP_D_MINUS_M;
+    } else if (!strcmp(s, "M-D")) {
+        id = COMP_M_MINUS_D;
+    } else if (!strcmp(s, "D&M")) {
+        id = COMP_D_AND_M;
+    } else if (!strcmp(s, "D|M")) {
+        id = COMP_D_OR_M;
+    }
+
+    *a = 1;
+    return id;
+}
+
+inline jump_id str_to_jumpid(const char *s)
+{
+    jump_id id = JMP_INVALID;
+
+    if (s == NULL) {
+        id = JMP_NULL;
+    } else if (!strcmp(s, "JGT")) {
+        id = JMP_JGT;
+    } else if (!strcmp(s, "JEQ")) {
+        id = JMP_JEQ;
+    } else if (!strcmp(s, "JGE")) {
+        id = JMP_JGE;
+    } else if (!strcmp(s, "JLT")) {
+        id = JMP_JLT;
+    } else if (!strcmp(s, "JNE")) {
+        id = JMP_JNE;
+    } else if (!strcmp(s, "JLE")) {
+        id = JMP_JLE;
+    } else if (!strcmp(s, "JMP")) {
+        id = JMP_JMP;
+    }
+
+    return id;
+}
+
+
 /*
  * Represents A-instructions, C-instructions and invalid instructions.
  */
