@@ -252,14 +252,20 @@ int main(int argc, const char *argv[])
     for (unsigned i = 0; i < instruction_num; i++) {
         inst = instructions[i];
         if (inst.id == INST_A) {
+            hack_addr addr;
             if (! inst.inst.a.resolved) {
-                puts(inst.inst.a.operand.symbol);
+                addr = symtab_resolve(symtab, inst.inst.a.operand.symbol);
+                printf(inst.inst.a.operand.symbol);
+                printf(" -->  ");
                 free(inst.inst.a.operand.symbol);
             } else {
-                printf("%u\n", inst.inst.a.operand.address);;
+                addr = inst.inst.a.operand.address;
             }
+            printf("%d\n", addr);
         }
     }
+
+    /*symtab_print(symtab);*/
 
     symtab_destroy(symtab);
     free(instructions);

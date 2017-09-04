@@ -46,6 +46,7 @@ void symtab_add(SymbolTable table, const char *name, hack_addr address)
     TableEntry new_entry = assembler_malloc(sizeof(struct table_entry));
 
     new_entry->name = assembler_malloc(strlen(name) + 1);
+    new_entry->next = NULL;
     // the following is safe because we just allocated the exact space needed
     strcpy(new_entry->name, name);
     new_entry->address = address;
@@ -70,6 +71,22 @@ hack_addr symtab_lookup(SymbolTable table, const char *name) {
     }
 
     return SYMBOL_NOT_FOUND;
+}
+
+static hack_addr symtab_get_next_avail_addr(void) {
+    static hack_addr address = 16;
+    return address++;
+}
+
+hack_addr symtab_resolve(SymbolTable table, const char *name) {
+    hack_addr address = symtab_lookup(table, name);
+
+    if (address == SYMBOL_NOT_FOUND) {
+        address = symtab_get_next_avail_addr();
+        symtab_add(table, name, address);
+    }
+
+    return address;
 }
 
 void symtab_destroy(SymbolTable table)

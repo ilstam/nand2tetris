@@ -34,6 +34,17 @@ void symtab_add(SymbolTable table, const char *name, hack_addr address);
 hack_addr symtab_lookup(SymbolTable table, const char *name);
 
 /**
+ * Translate a symbol to a hack address.
+ *
+ * If symbol already exists in the symbol table it just returns its corre-
+ * sponding hack address. If symbol does not exist in the symbol table, it
+ * adds it in the table first and returns its newly assigned address.
+ *
+ * retval - hack address that corresponds to the given symbol
+ */
+hack_addr symtab_resolve(SymbolTable table, const char *name);
+
+/**
  * Indicate you are complete with the symbol table. Free and delete any
  * remaining internal structures. You must *always* call this function to
  * dispose of the symbol table.
