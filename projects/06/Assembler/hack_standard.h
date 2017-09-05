@@ -127,7 +127,7 @@ typedef enum comp_id {
     COMP_D_OR_M = 21,
 } comp_id;
 
-inline dest_id str_to_destid(const char *s)
+static inline dest_id str_to_destid(const char *s)
 {
     dest_id id = DEST_INVALID;
 
@@ -152,7 +152,7 @@ inline dest_id str_to_destid(const char *s)
     return id;
 }
 
-inline comp_id str_to_compid(const char *s, int *a)
+static inline comp_id str_to_compid(const char *s, int *a)
 {
     comp_id id = COMP_INVALID;
 
@@ -227,7 +227,7 @@ inline comp_id str_to_compid(const char *s, int *a)
     return id;
 }
 
-inline jump_id str_to_jumpid(const char *s)
+static inline jump_id str_to_jumpid(const char *s)
 {
     jump_id id = JMP_INVALID;
 

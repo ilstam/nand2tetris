@@ -254,6 +254,23 @@ int main(int argc, const char *argv[])
 
             strcpy(tmp_line, line); // safe because they have same lengths
             parse_C_instruction(tmp_line, &dest, &comp, &jmp);
+
+            int a;
+            dest_id did = str_to_destid(dest);
+            comp_id cid = str_to_compid(comp, &a);
+            jump_id jid = str_to_jumpid(jmp);
+
+            if (did == DEST_INVALID) {
+                exit_program(EXIT_INVALID_C_DEST, line_num, line);
+            } else if (cid == COMP_INVALID) {
+                exit_program(EXIT_INVALID_C_COMP, line_num, line);
+            } else if (jid == JMP_INVALID) {
+                exit_program(EXIT_INVALID_C_JUMP, line_num, line);
+            }
+            inst.inst.c.dest = did;
+            inst.inst.c.comp = cid;
+            inst.inst.c.a = 1 ? a : 0;
+            inst.inst.c.jump = jid;
             inst.id = INST_C;
         }
 
@@ -276,7 +293,6 @@ int main(int argc, const char *argv[])
 
     /* Second pass */
 
-    printf("Translating A instructions only...\n");
     for (unsigned i = 0; i < instruction_num; i++) {
         inst = instructions[i];
         if (inst.id == INST_A) {
@@ -287,7 +303,6 @@ int main(int argc, const char *argv[])
             } else {
                 addr = inst.inst.a.operand.address;
             }
-            /*printf("%d\n", addr);*/
             printf(OPCODE_STR"\n", OPCODE_TO_BINARY(addr));
         }
     }

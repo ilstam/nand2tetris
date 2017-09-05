@@ -36,6 +36,18 @@ enum exitcode {
      */
     EXIT_INVALID_A_INST = 10,
     /*
+     * Exit code 11 represents that the destination part of a C-instruction is invalid.
+     */
+    EXIT_INVALID_C_DEST = 11,
+    /*
+     * Exit code 12 represents that the compare part of a C-instruction is invalid.
+     */
+    EXIT_INVALID_C_COMP = 12,
+    /*
+     * Exit code 13 represents that the jump part of a C-instruction is invalid.
+     */
+    EXIT_INVALID_C_JUMP = 13,
+    /*
      * Exit code 15 represents that the program run out of memory.
      */
     EXIT_OUT_OF_MEMORY = 15,
