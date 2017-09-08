@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "symbol_table.h"
-#include "utils.h"
+#include "asm_malloc.h"
 
 
 /*
@@ -36,7 +36,7 @@ struct symbol_table {
 
 SymbolTable symtab_init(void)
 {
-    SymbolTable table = assembler_malloc(sizeof(struct symbol_table));
+    SymbolTable table = asm_malloc(sizeof(struct symbol_table));
     table->head = NULL;
     table->tail = NULL;
     return table;
@@ -44,9 +44,9 @@ SymbolTable symtab_init(void)
 
 void symtab_add(SymbolTable table, const char *name, hack_addr address)
 {
-    TableEntry new_entry = assembler_malloc(sizeof(struct table_entry));
+    TableEntry new_entry = asm_malloc(sizeof(struct table_entry));
 
-    new_entry->name = assembler_malloc(strlen(name) + 1);
+    new_entry->name = asm_malloc(strlen(name) + 1);
     new_entry->next = NULL;
     // the following is safe because we just allocated the exact space needed
     strcpy(new_entry->name, name);

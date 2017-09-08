@@ -1,9 +1,10 @@
 #include <stdlib.h>
 
+#include "asm_malloc.h"
 #include "exit.h"
 
 
-void *assembler_malloc(size_t size)
+void *asm_malloc(size_t size)
 {
     void *ptr = malloc(size);
 
@@ -14,7 +15,7 @@ void *assembler_malloc(size_t size)
     return ptr;
 }
 
-void *assembler_realloc(void *ptr, size_t size)
+void *asm_realloc(void *ptr, size_t size)
 {
     void *tmp = realloc(ptr, size);
 

@@ -10,7 +10,7 @@
 
 #include "symbol_table.h"
 #include "hack_standard.h"
-#include "utils.h"
+#include "asm_malloc.h"
 #include "exit.h"
 
 
@@ -205,7 +205,7 @@ void populate_predefined_symbols(SymbolTable table)
 bool parse_A_instruction(const char *line, a_inst *inst)
 {
     // +1 in malloc not needed because we don't store 1st char
-    inst->operand.symbol = assembler_malloc(strlen(line));
+    inst->operand.symbol = asm_malloc(strlen(line));
     char *s = inst->operand.symbol;
     strcpy(s, line+1);
 
@@ -355,7 +355,7 @@ int main(int argc, const char *argv[])
             // Double what we already have or make our first allocation of default value.
             unsigned tmp = allocated_mem ? allocated_mem * 2 : INIT_MEMORY_ALLOC;
             allocated_mem = tmp > MAX_INSTRUCTION ? MAX_INSTRUCTION : tmp;
-            instructions = assembler_realloc(instructions, allocated_mem * sizeof(generic_inst));
+            instructions = asm_realloc(instructions, allocated_mem * sizeof(generic_inst));
         }
 
         instructions[instruction_num++] = inst;
@@ -365,7 +365,7 @@ int main(int argc, const char *argv[])
 
     // Reduce allocated memory to the amount of memory that we really need for
     // storing all instructions read.
-    instructions = assembler_realloc(instructions, instruction_num * sizeof(generic_inst));
+    instructions = asm_realloc(instructions, instruction_num * sizeof(generic_inst));
 
     /* Second pass */
 
