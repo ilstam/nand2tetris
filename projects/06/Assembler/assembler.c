@@ -13,10 +13,10 @@
 #include "utils.h"
 #include "exit.h"
 
+
 #define MAX_LINE_LEN  200
 #define MAX_LABEL_LEN 198
 #define INIT_MEMORY_ALLOC 400
-
 
 #define OPCODE_STR "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
 
@@ -46,6 +46,54 @@
         (opcode) |= (inst).dest << 3;  \
         (opcode) |= (inst).jump;       \
     } while (0)
+
+
+typedef enum inst_id {
+    INST_INVALID = -1,
+    INST_A,
+    INST_C,
+} inst_id;
+
+/*
+ * The opcode of an A-instruction is a 0 bit, followed by a 15-bit address.
+ * Sometimes we are just provided with a symbol's name instead of a direct
+ * address, and we use this symbol to resolve the real address later.
+ *
+ * When resolved is true that means that we already have a numerical address.
+ * When false, the symbol field holds a string that represents a symbol's name.
+ */
+typedef struct a_inst {
+    union {
+        char *symbol;
+        hack_addr address;
+    } operand;
+    bool resolved;
+} a_inst;
+
+/*
+ * The opcode of a C-instruction is the following:
+ * 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
+ */
+typedef struct c_inst {
+    int16_t a:1;
+    int16_t comp:7; // make these bigger than their opcode length in order to
+    int16_t dest:4; // be able to hold invalid values as well
+    int16_t jump:4;
+} c_inst ;
+
+/*
+ * A generic instruction that can either hold an A-instruction or a C-instruction.
+ * In order to determine which type of instruction it holds we have to check
+ * the id field.
+ */
+typedef struct generic_inst {
+    union {
+        c_inst c;
+        a_inst a;
+    } inst;
+    inst_id id;
+} generic_inst;
+
 
 
 /*
