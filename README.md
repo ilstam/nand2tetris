@@ -31,4 +31,8 @@ Developed a few programs in the HACK assembly language.
 
 Implemented the CPU and the complete Memory chip with support for Screen and Keyboard memory mapping. Assembled the complete HACK computer architecture together. The HACK computer is now able to execute instructions written in the HACK assembly language.
 
+### Week 6
+
+Developed a 2-pass symbolic assembler for the HACK assembly language in C.
+
 To be continued..
