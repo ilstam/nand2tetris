@@ -103,12 +103,12 @@ typedef enum comp_id {
     COMP_NOT_A = 49,
     COMP_MINUS_D = 15,
     COMP_MINUS_A = 51,
-    COMP_D_PLUS_1 = 41,
+    COMP_D_PLUS_1 = 31,
     COMP_A_PLUS_1 = 55,
     COMP_D_MINUS_1 = 14,
     COMP_A_MINUS_1 = 50,
     COMP_D_PLUS_A = 2,
-    COMP_D_MINUS_A = 3,
+    COMP_D_MINUS_A = 19,
     COMP_A_MINUS_D = 7,
     COMP_D_AND_A = 0,
     COMP_D_OR_A = 21,
@@ -121,7 +121,7 @@ typedef enum comp_id {
     COMP_M_PLUS_1 = 55,
     COMP_M_MINUS_1 = 50,
     COMP_D_PLUS_M = 2,
-    COMP_D_MINUS_M = 3,
+    COMP_D_MINUS_M = 19,
     COMP_M_MINUS_D = 7,
     COMP_D_AND_M = 0,
     COMP_D_OR_M = 21,
@@ -283,11 +283,10 @@ typedef struct a_inst {
  * 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
  */
 typedef struct c_inst {
-    int16_t prefix:3;
     int16_t a:1;
-    int16_t comp:6;
-    int16_t dest:3;
-    int16_t jump:3;
+    int16_t comp:7; // make these bigger than their opcode length in order to be able
+    int16_t dest:4; // be able to hold invalid values as well
+    int16_t jump:4;
 } c_inst ;
 
 /*

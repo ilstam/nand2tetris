@@ -154,19 +154,30 @@ bool parse_A_instruction(const char *line, a_inst *inst)
 
 /*
  * Parse a C-instruction and split it into its three parts; dest, comp and jmp.
- * For each part that is missing set the corresponding pointer to NULL.
+ * Then do the mapping between strings and HACK instruction codes.
  */
-void parse_C_instruction(char *line, char **dest, char **comp, char **jmp)
+void parse_C_instruction(char *line, c_inst *inst)
 {
-    char *tmp = strtok(line, ";");
-    *jmp = strtok(NULL, "");
-    *dest = strtok(tmp, "=");
-    *comp = strtok(NULL, "");
+    char *tmp = NULL;
+    char *dest = NULL;
+    char *comp = NULL;
+    char *jmp = NULL;
+    int a;
 
-    if (*comp == NULL) {
-        *comp = *dest;
-        *dest = NULL;
+    tmp = strtok(line, ";");
+    jmp = strtok(NULL, "");
+    dest = strtok(tmp, "=");
+    comp = strtok(NULL, "");
+
+    if (comp == NULL) {
+        comp = dest;
+        dest = NULL;
     }
+
+    inst->dest = str_to_destid(dest);
+    inst->comp = str_to_compid(comp, &a);
+    inst->a = 1 ? a : 0;
+    inst->jump = str_to_jumpid(jmp);
 }
 
 
@@ -227,8 +238,7 @@ int main(int argc, const char *argv[])
         strip_comments_and_whitespace(line);
 
         if (!*line) {
-            // skip empty lines
-            continue;
+            continue; // skip empty lines
         }
 
         if (is_label(line, label)) {
@@ -248,29 +258,17 @@ int main(int argc, const char *argv[])
             }
             inst.id = INST_A;
         } else {
-            char *dest = NULL;
-            char *comp = NULL;
-            char *jmp = NULL;
-
             strcpy(tmp_line, line); // safe because they have same lengths
-            parse_C_instruction(tmp_line, &dest, &comp, &jmp);
+            parse_C_instruction(tmp_line, &inst.inst.c);
 
-            int a;
-            dest_id did = str_to_destid(dest);
-            comp_id cid = str_to_compid(comp, &a);
-            jump_id jid = str_to_jumpid(jmp);
-
-            if (did == DEST_INVALID) {
+            if (inst.inst.c.dest == DEST_INVALID) {
                 exit_program(EXIT_INVALID_C_DEST, line_num, line);
-            } else if (cid == COMP_INVALID) {
+            } else if (inst.inst.c.comp == COMP_INVALID) {
                 exit_program(EXIT_INVALID_C_COMP, line_num, line);
-            } else if (jid == JMP_INVALID) {
+            } else if (inst.inst.c.jump == JMP_INVALID) {
                 exit_program(EXIT_INVALID_C_JUMP, line_num, line);
             }
-            inst.inst.c.dest = did;
-            inst.inst.c.comp = cid;
-            inst.inst.c.a = 1 ? a : 0;
-            inst.inst.c.jump = jid;
+
             inst.id = INST_C;
         }
 
@@ -293,21 +291,29 @@ int main(int argc, const char *argv[])
 
     /* Second pass */
 
+    int16_t op;
+
     for (unsigned i = 0; i < instruction_num; i++) {
+        op = 0;
         inst = instructions[i];
+
         if (inst.id == INST_A) {
-            hack_addr addr;
             if (! inst.inst.a.resolved) {
-                addr = symtab_resolve(symtab, inst.inst.a.operand.symbol);
+                op = symtab_resolve(symtab, inst.inst.a.operand.symbol);
                 free(inst.inst.a.operand.symbol);
             } else {
-                addr = inst.inst.a.operand.address;
+                op = inst.inst.a.operand.address;
             }
-            printf(OPCODE_STR"\n", OPCODE_TO_BINARY(addr));
+        } else if (inst.id == INST_C) {
+            op |= (7 << 13);             /* set first 3 bits from the left to 1 */
+            op |= inst.inst.c.a << 12;   /* store a in 4th bit */
+            op |= inst.inst.c.comp << 6; /* store comp in bits 5-10 */
+            op |= inst.inst.c.dest << 3; /* store dest in bits 11-13 */
+            op |= inst.inst.c.jump;      /* store dest in bits 11-13 */
         }
-    }
 
-    /*symtab_print(symtab);*/
+        printf(OPCODE_STR"\n", OPCODE_TO_BINARY(op));
+    }
 
     symtab_destroy(symtab);
     free(instructions);
