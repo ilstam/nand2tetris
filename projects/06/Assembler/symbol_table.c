@@ -78,7 +78,7 @@ hack_addr symtab_lookup(SymbolTable table, const char *name) {
  * Return true if the given address is already assigned to some symbol in the
  * symbol table, else false.
  */
-static bool symtab_address_assigned(SymbolTable table, hack_addr address) {
+__attribute__((unused)) static bool symtab_address_assigned(SymbolTable table, hack_addr address) {
     TableEntry entry = table->head;
 
     for (; entry != NULL; entry = entry->next) {
@@ -93,12 +93,17 @@ static bool symtab_address_assigned(SymbolTable table, hack_addr address) {
 /**
  * Return the next available hack address that can be assigned to a new symbol.
  */
-static hack_addr symtab_get_next_avail_addr(SymbolTable table) {
+static hack_addr symtab_get_next_avail_addr(__attribute__ ((unused)) SymbolTable table) {
     static hack_addr address = 16;
 
-    while (symtab_address_assigned(table, address)) {
-        address++;
-    }
+    // NOTICE: The following commented code prevents a single memory address
+    // from being assigned to 2 different symbols. However, the HACK standard
+    // does not predict this, and if we uncomment these lines we produce
+    // different machine code than the official HACK assembler sometimes.
+
+    /*while (symtab_address_assigned(table, address)) {*/
+        /*address++;*/
+    /*}*/
 
     return address++;
 }
