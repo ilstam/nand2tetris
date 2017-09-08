@@ -18,6 +18,36 @@
 #define INIT_MEMORY_ALLOC 400
 
 
+#define OPCODE_STR "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+
+#define OPCODE_TO_BINARY(opcode) \
+  (opcode & 0x8000 ? '1' : '0'), \
+  (opcode & 0x4000 ? '1' : '0'), \
+  (opcode & 0x2000 ? '1' : '0'), \
+  (opcode & 0x1000 ? '1' : '0'), \
+  (opcode & 0x0800 ? '1' : '0'), \
+  (opcode & 0x0400 ? '1' : '0'), \
+  (opcode & 0x0200 ? '1' : '0'), \
+  (opcode & 0x0100 ? '1' : '0'), \
+  (opcode & 0x0080 ? '1' : '0'), \
+  (opcode & 0x0040 ? '1' : '0'), \
+  (opcode & 0x0020 ? '1' : '0'), \
+  (opcode & 0x0010 ? '1' : '0'), \
+  (opcode & 0x0008 ? '1' : '0'), \
+  (opcode & 0x0004 ? '1' : '0'), \
+  (opcode & 0x0002 ? '1' : '0'), \
+  (opcode & 0x0001 ? '1' : '0')
+
+#define INST_TO_OPCODE(inst, opcode)   \
+    do {                               \
+        (opcode) |= (7 << 13);         \
+        (opcode) |= (inst).a << 12;    \
+        (opcode) |= (inst).comp << 6;  \
+        (opcode) |= (inst).dest << 3;  \
+        (opcode) |= (inst).jump;       \
+    } while (0)
+
+
 /*
  * Check whether the given path corresponds to a regular file and if that's
  * the case try to open the file using fopen.
@@ -291,7 +321,7 @@ int main(int argc, const char *argv[])
 
     /* Second pass */
 
-    int16_t op;
+    opcode op;
 
     for (unsigned i = 0; i < instruction_num; i++) {
         op = 0;
@@ -305,11 +335,7 @@ int main(int argc, const char *argv[])
                 op = inst.inst.a.operand.address;
             }
         } else if (inst.id == INST_C) {
-            op |= (7 << 13);             /* set first 3 bits from the left to 1 */
-            op |= inst.inst.c.a << 12;   /* store a in 4th bit */
-            op |= inst.inst.c.comp << 6; /* store comp in bits 5-10 */
-            op |= inst.inst.c.dest << 3; /* store dest in bits 11-13 */
-            op |= inst.inst.c.jump;      /* store dest in bits 11-13 */
+            INST_TO_OPCODE(inst.inst.c, op);
         }
 
         printf(OPCODE_STR"\n", OPCODE_TO_BINARY(op));

@@ -18,6 +18,8 @@
  */
 typedef int16_t hack_addr;
 
+typedef int16_t opcode;
+
 
 /*
  * Total number of predefined symbols.
