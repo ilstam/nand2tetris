@@ -33,6 +33,6 @@ Implemented the CPU and the complete Memory chip with support for Screen and Key
 
 ### Week 6
 
-Developed a 2-pass symbolic assembler for the HACK assembly language in C.
+Developed a 2-pass symbolic [assembler](https://github.com/Ilias95/nand2tetris/tree/master/assembler) for the HACK assembly language in C.
 
 To be continued..

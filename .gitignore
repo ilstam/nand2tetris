@@ -1,5 +1,5 @@
 **/*.o
 **/*.out
-projects/06/Assembler/assembler
+assembler/assembler
 VM/vm
 tools/bin/*.dat
