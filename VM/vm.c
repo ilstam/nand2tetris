@@ -1,17 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #include "utils.h"
 #include "exit.h"
 
 #define MAX_LINE_LEN 200
+/* Max chars of generated assembly output for a single line/command. */
+#define MAX_ASM_OUT  1000
+/* Number of tokens of the command with the most tokens (out of all cmds). */
 #define MAX_TOKENS 3
 
 
 typedef enum cmd_id {
-    CMD_INVALID = -1,
+    CMD_INVALID = 0,
     CMD_PUSH,
     CMD_POP,
     CMD_ADD,
@@ -23,7 +27,7 @@ typedef enum cmd_id {
     CMD_EQ,
     CMD_GT,
     CMD_LT,
-    MAX_COMMANDS  // their total count
+    MAX_COMMANDS  /* their total count */
 } cmd_id;
 
 cmd_id str_to_cmdid(const char *s)
@@ -83,7 +87,7 @@ FILE *file_open_or_bail(const char *filename, const char *mode)
 }
 
 /*
- * Strip a line from comments and removes new line character.
+ * Strip a line from comments and remove trailing whitespace.
  */
 char *strip_comments(char *s) {
     // sanity checks
@@ -94,16 +98,19 @@ char *strip_comments(char *s) {
     }
 
     char *s2 = s;
+    char *last_char = s;
 
     for (; *s2; s2++) {
         if (*s2 == '/' && *(s2+1) == '/') {
             *s2 = '\0';
             break;
+        } else if (!isspace(*s2)) {
+            last_char = s2;
         }
     }
-    if (s2 != s && *(s2-1) == '\n') {
-        // remove new line char
-        *(s2-1) = '\0';
+
+    if (*last_char) {
+        *(last_char + 1) = '\0';
     }
 
     return s;
@@ -111,37 +118,63 @@ char *strip_comments(char *s) {
 
 typedef bool (*parser_ptr)(int, const char **, char *);
 
+bool parser_invalid(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Invalid parser called!");
+    return true;
+}
+
 bool parser_push(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Push parser called!");
     return true;
 }
+
 bool parser_pop(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Pop parser called!");
     return true;
 }
+
 bool parser_add(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Add parser called!");
     return true;
 }
+
 bool parser_sub(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Sub parser called!");
     return true;
 }
+
 bool parser_neg(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Neg parser called!");
     return true;
 }
+
 bool parser_and(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("And parser called!");
     return true;
 }
+
 bool parser_or(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Or parser called!");
     return true;
 }
+
 bool parser_not(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Not parser called!");
     return true;
 }
+
 bool parser_eq(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Eq parser called!");
     return true;
 }
+
 bool parser_gt(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Gt parser called!");
     return true;
 }
+
 bool parser_lt(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+    puts("Lt parser called!");
     return true;
 }
 
@@ -155,6 +188,11 @@ int main(int argc, const char *argv[])
      * Holds current line read.
      */
     char line[MAX_LINE_LEN + 1];
+    char tmp_line[MAX_LINE_LEN + 1];
+    /*
+     * Holds the generated assembly code for the current line read.
+     */
+    char asm_output[MAX_ASM_OUT + 1];
     /*
      * To be filled with command tokens.
      */
@@ -165,10 +203,11 @@ int main(int argc, const char *argv[])
     int ntokens;
 
     parser_ptr parser_fn[MAX_COMMANDS] = {
-        [CMD_PUSH] = parser_push, [CMD_POP] = parser_pop, [CMD_ADD] = parser_add,
-        [CMD_SUB] = parser_sub, [CMD_NEG] = parser_neg, [CMD_AND] = parser_and,
-        [CMD_OR] = parser_or, [CMD_NOT] = parser_not, [CMD_EQ] = parser_eq,
-        [CMD_GT] = parser_gt, [CMD_LT] = parser_lt
+        [CMD_INVALID] = parser_invalid, [CMD_PUSH] = parser_push,
+        [CMD_POP] = parser_pop, [CMD_ADD] = parser_add, [CMD_SUB] = parser_sub,
+        [CMD_NEG] = parser_neg, [CMD_AND] = parser_and, [CMD_OR] = parser_or,
+        [CMD_NOT] = parser_not, [CMD_EQ] = parser_eq, [CMD_GT] = parser_gt,
+        [CMD_LT] = parser_lt
     };
 
     FILE *fp = file_open_or_bail(argv[1], "r");
@@ -179,11 +218,16 @@ int main(int argc, const char *argv[])
             continue; // skip empty lines
         }
 
-        ntokens = s_tokenize(line, tokens, MAX_TOKENS+1, " ");
-        printf("%d\n", ntokens);
-        for (int i = 0; i < ntokens; i++) {
-            puts(tokens[i]);
-        }
+        strcpy(tmp_line, line);
+        ntokens = s_tokenize(tmp_line, tokens, MAX_TOKENS+1, " ");
+        // ntokens should be at least 1 because we have skipped empty lines
+        cmd_id cmdid = str_to_cmdid(tokens[0]);
+        puts(line);
+        parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
+
+        /*for (int i = 0; i < ntokens; i++) {*/
+            /*puts(tokens[i]);*/
+        /*}*/
         puts("---------");
     }
 
