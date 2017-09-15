@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include "utils.h"
 #include "exit.h"
 
 #define MAX_LINE_LEN 200
+#define MAX_TOKENS 3
+
 
 /*
  * Check whether the given path corresponds to a regular file and if that's
@@ -57,6 +60,7 @@ char *strip_comments(char *s) {
     return s;
 }
 
+
 int main(int argc, const char *argv[])
 {
     if (argc != 2) {
@@ -67,12 +71,29 @@ int main(int argc, const char *argv[])
      * Holds current line read.
      */
     char line[MAX_LINE_LEN + 1];
+    /*
+     * To be filled with command tokens.
+     */
+    char *tokens[MAX_TOKENS + 1] = {NULL};
+    /*
+     * Number of tokens of current line / command.
+     */
+    int ntokens;
 
     FILE *fp = file_open_or_bail(argv[1], "r");
 
     while (fgets(line, sizeof(line), fp)) {
         strip_comments(line);
-        printf("%s\n", line);
+        if (is_empty(line)) {
+            continue; // skip empty lines
+        }
+
+        ntokens = s_tokenize(line, tokens, MAX_TOKENS+1, " ");
+        printf("%d\n", ntokens);
+        for (int i = 0; i < ntokens; i++) {
+            puts(tokens[i]);
+        }
+        puts("---------");
     }
 
     fclose(fp);
