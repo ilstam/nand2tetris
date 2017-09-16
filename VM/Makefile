@@ -4,7 +4,7 @@ CFLAGS=-O -Wall -W -pedantic -ansi -std=c99 -ggdb3 -c -O0
 vm: vm.o utils.o exit.o
 	$(CC) -o vm vm.o utils.o exit.o
 
-vm.o: vm.c utils.h exit.h
+vm.o: vm.c utils.h mapper.h exit.h
 	$(CC) $(CFLAGS) vm.c utils.c
 
 exit.o: exit.c exit.h

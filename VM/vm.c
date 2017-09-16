@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+#include "mapper.h"
 #include "utils.h"
 #include "exit.h"
 
@@ -12,6 +13,10 @@
 #define MAX_ASM_OUT  1000
 /* Number of tokens of the command with the most tokens (out of all cmds). */
 #define MAX_TOKENS 3
+
+static unsigned eq_label_counter = 0;
+static unsigned gt_label_counter = 0;
+static unsigned lt_label_counter = 0;
 
 
 typedef enum cmd_id {
@@ -133,48 +138,81 @@ bool parser_pop(__attribute__((unused)) int nargs, __attribute__((unused)) const
     return true;
 }
 
-bool parser_add(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Add parser called!");
+bool parser_add(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_ADD);
     return true;
 }
 
-bool parser_sub(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Sub parser called!");
+bool parser_sub(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_SUB);
     return true;
 }
 
-bool parser_neg(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Neg parser called!");
+bool parser_neg(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_NEG);
     return true;
 }
 
-bool parser_and(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("And parser called!");
+bool parser_and(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_AND);
     return true;
 }
 
-bool parser_or(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Or parser called!");
+bool parser_or(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_OR);
     return true;
 }
 
-bool parser_not(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Not parser called!");
+bool parser_not(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_NOT);
     return true;
 }
 
-bool parser_eq(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Eq parser called!");
+bool parser_eq(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_EQ);
+    sprintf(output, output, eq_label_counter, eq_label_counter);
+    eq_label_counter++;
     return true;
 }
 
-bool parser_gt(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Gt parser called!");
+bool parser_gt(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_GT);
+    sprintf(output, output, gt_label_counter, gt_label_counter);
+    gt_label_counter++;
     return true;
 }
 
-bool parser_lt(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Lt parser called!");
+bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    strcpy(output, ASM_LT);
+    sprintf(output, output, lt_label_counter, lt_label_counter);
+    lt_label_counter++;
     return true;
 }
 
@@ -189,6 +227,10 @@ int main(int argc, const char *argv[])
      */
     char line[MAX_LINE_LEN + 1];
     char tmp_line[MAX_LINE_LEN + 1];
+    /*
+     * Indicates current file line that is being processed.
+     */
+    unsigned line_num = 0;
     /*
      * Holds the generated assembly code for the current line read.
      */
@@ -213,7 +255,11 @@ int main(int argc, const char *argv[])
     FILE *fp = file_open_or_bail(argv[1], "r");
 
     while (fgets(line, sizeof(line), fp)) {
+        strcpy(asm_output, "");
+        line_num++;
+
         strip_comments(line);
+
         if (is_empty(line)) {
             continue; // skip empty lines
         }
@@ -223,11 +269,13 @@ int main(int argc, const char *argv[])
         // ntokens should be at least 1 because we have skipped empty lines
         cmd_id cmdid = str_to_cmdid(tokens[0]);
         puts(line);
-        parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
+        bool valid = parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
 
-        /*for (int i = 0; i < ntokens; i++) {*/
-            /*puts(tokens[i]);*/
-        /*}*/
+        if (!valid) {
+            exit_program(EXIT_INVALID_COMMAND, line_num, line);
+        }
+
+        puts(asm_output);
         puts("---------");
     }
 

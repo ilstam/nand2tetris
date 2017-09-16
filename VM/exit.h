@@ -20,6 +20,10 @@ enum exitcode {
      */
     EXIT_MANY_FILES = 4,
     /*
+     * Exit code 7 represents that an invalid command has been encountered.
+     */
+    EXIT_INVALID_COMMAND = 7,
+    /*
      * Exit code 15 represents that the program run out of memory.
      */
     EXIT_OUT_OF_MEMORY = 15,
