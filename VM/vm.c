@@ -140,9 +140,9 @@ bool parser_push(int nargs, const char *args[nargs], char *output) {
     }
 
     char *endptr = NULL;
-    unsigned i = strtol(args[2], &endptr, 10);
+    int i = strtol(args[2], &endptr, 10);
 
-    if (args[2] == endptr || errno != 0 || !args[2] || *endptr) {
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || i < 0) {
         return false; // not a number
     }
 
@@ -150,7 +150,29 @@ bool parser_push(int nargs, const char *args[nargs], char *output) {
         sprintf(output, ASM_PUSH_CONST_STATIC, "", i);
     } else if (!strcmp(args[1], "static")) {
         sprintf(output, ASM_PUSH_CONST_STATIC, filename_noext, i);
+    } else if (!strcmp(args[1], "local")) {
+        sprintf(output, ASM_PUSH_LATT, i, "LCL");
+    } else if (!strcmp(args[1], "argument")) {
+        sprintf(output, ASM_PUSH_LATT, i, "ARG");
+    } else if (!strcmp(args[1], "this")) {
+        sprintf(output, ASM_PUSH_LATT, i, "THIS");
+    } else if (!strcmp(args[1], "that")) {
+        sprintf(output, ASM_PUSH_LATT, i, "THAT");
+    } else if (!strcmp(args[1], "temp")) {
+        if (i < 1 || i > 8) {
+            return false;
+        }
+        sprintf(output, ASM_PUSH_TEMP, i);
+    } else if (!strcmp(args[1], "pointer")) {
+        if (i == 0) {
+            sprintf(output, ASM_PUSH_POINTER, "THIS");
+        } else if (i == 1) {
+            sprintf(output, ASM_PUSH_POINTER, "THAT");
+        } else {
+            return false;
+        }
     }
+
     return true;
 }
 

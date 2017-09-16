@@ -9,6 +9,39 @@
     "A=A-1\n"                 \
     "M=D\n"
 
+// local, argument, this, that
+#define ASM_PUSH_LATT \
+    "@%d\n"           \
+    "D=A\n"           \
+    "@%s\n"           \
+    "A=M\n"           \
+    "A=D+A\n"         \
+    "D=M\n"           \
+    "@SP\n"           \
+    "AM=M+1\n"        \
+    "A=A-1\n"         \
+    "M=D\n"
+
+#define ASM_PUSH_TEMP \
+    "@5\n"            \
+    "D=A\n"           \
+    "@%d\n"           \
+    "A=D+A\n"         \
+    "D=M\n"           \
+    "@SP\n"           \
+    "AM=M+1\n"        \
+    "A=A-1\n"         \
+    "M=D\n"
+
+#define ASM_PUSH_POINTER \
+    "@%s\n"              \
+    "A=M\n"              \
+    "D=M\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"
+
 #define ASM_ADD \
     "@SP\n"     \
     "AM=M-1\n"  \
