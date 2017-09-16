@@ -35,4 +35,8 @@ Implemented the CPU and the complete Memory chip with support for Screen and Key
 
 Developed a 2-pass symbolic [assembler](https://github.com/Ilias95/nand2tetris/tree/master/assembler) for the HACK assembly language in C.
 
+### Week 7
+
+Implemented first part of a [VM translator](https://github.com/Ilias95/nand2tetris/tree/master/VM) in C. This VM translates vm code produced by a Jack compiler into HACK assembly instructions. It implements a Stack Machine and supports stack arithmetic operations such as ADD, SUB, NEG, EQ, etc. It also offers support for using different memory segments.
+
 To be continued..
