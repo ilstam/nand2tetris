@@ -42,6 +42,48 @@
     "A=A-1\n"            \
     "M=D\n"
 
+#define ASM_POP_STATIC \
+    "@SP\n"            \
+    "AM=M-1\n"         \
+    "D=M\n"            \
+    "@%s%d\n"          \
+    "M=D\n"
+
+#define ASM_POP_LATT \
+    "@%s\n"          \
+    "D=M\n"          \
+    "@%d\n"           \
+    "D=D+A\n"        \
+    "@R13\n"         \
+    "M=D\n"          \
+    "@SP\n"          \
+    "AM=M-1\n"       \
+    "D=M\n"          \
+    "@R13\n"         \
+    "A=M\n"          \
+    "M=D\n"
+
+#define ASM_POP_TEMP \
+    "@5\n"           \
+    "D=A\n"          \
+    "@%d\n"          \
+    "D=D+A\n"        \
+    "@R13\n"         \
+    "M=D\n"          \
+    "@SP\n"          \
+    "AM=M-1\n"       \
+    "D=M\n"          \
+    "@R13\n"         \
+    "A=M\n"          \
+    "M=D\n"
+
+#define ASM_POP_POINTER \
+    "@SP\n"             \
+    "AM=M-1\n"          \
+    "D=M\n"             \
+    "@%s\n"             \
+    "M=D\n"
+
 #define ASM_ADD \
     "@SP\n"     \
     "AM=M-1\n"  \

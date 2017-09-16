@@ -129,9 +129,9 @@ char *strip_comments(char *s) {
 
 typedef bool (*parser_ptr)(int, const char **, char *);
 
+
 bool parser_invalid(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Invalid parser called!");
-    return true;
+    return false;
 }
 
 bool parser_push(int nargs, const char *args[nargs], char *output) {
@@ -171,13 +171,52 @@ bool parser_push(int nargs, const char *args[nargs], char *output) {
         } else {
             return false;
         }
+    } else {
+        return false;
     }
 
     return true;
 }
 
-bool parser_pop(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Pop parser called!");
+bool parser_pop(int nargs, const char *args[nargs], char *output) {
+    if (nargs != 3) {
+        return false;
+    }
+
+    char *endptr = NULL;
+    int i = strtol(args[2], &endptr, 10);
+
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || i < 0) {
+        return false; // not a number
+    }
+
+    if (!strcmp(args[1], "static")) {
+        sprintf(output, ASM_POP_STATIC, filename_noext, i);
+    } else if (!strcmp(args[1], "local")) {
+        sprintf(output, ASM_POP_LATT, "LCL", i);
+    } else if (!strcmp(args[1], "argument")) {
+        sprintf(output, ASM_POP_LATT, "ARG", i);
+    } else if (!strcmp(args[1], "this")) {
+        sprintf(output, ASM_POP_LATT, "THIS", i);
+    } else if (!strcmp(args[1], "that")) {
+        sprintf(output, ASM_POP_LATT, "THAT", i);
+    } else if (!strcmp(args[1], "temp")) {
+        if (i < 1 || i > 8) {
+            return false;
+        }
+        sprintf(output, ASM_POP_TEMP, i);
+    } else if (!strcmp(args[1], "pointer")) {
+        if (i == 0) {
+            sprintf(output, ASM_POP_POINTER, "THIS");
+        } else if (i == 1) {
+            sprintf(output, ASM_POP_POINTER, "THAT");
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
     return true;
 }
 
@@ -300,7 +339,6 @@ int main(int argc, const char *argv[])
     FILE *fp = file_open_or_bail(argv[1], "r");
 
     while (fgets(line, sizeof(line), fp)) {
-        /*strcpy(asm_output, "");*/
         line_num++;
 
         strip_comments(line);
@@ -313,7 +351,6 @@ int main(int argc, const char *argv[])
         ntokens = s_tokenize(tmp_line, tokens, MAX_TOKENS+1, " ");
         // ntokens should be at least 1 because we have skipped empty lines
         cmd_id cmdid = str_to_cmdid(tokens[0]);
-        /*puts(line);*/
         bool valid = parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
 
         if (!valid) {
@@ -321,7 +358,6 @@ int main(int argc, const char *argv[])
         }
 
         printf(asm_output);
-        /*puts("---------");*/
     }
 
     fclose(fp);
