@@ -4,21 +4,25 @@
 
 enum exitcode {
     /*
-     * Exit code 1 represents that given file does not exist.
+     * Exit code 1 represents that input file does not exist.
      */
     EXIT_FILE_DOES_NOT_EXIST = 1,
     /*
-     * Exit code 2 represents that given file is not a regular file.
+     * Exit code 2 represents that input file is not a regular file.
      */
     EXIT_NOT_REGULAR_FILE = 2,
     /*
-     * Exit code 3 represents that given file couldn't be opened due to unknown reasons.
+     * Exit code 3 represents that input file couldn't be opened due to unknown reasons.
      */
     EXIT_CANNOT_OPEN_FILE = 3,
     /*
-     * Exit code 4 represents that more than 1 input files have been provided.
+     * Exit code 4 represents that output file couldn't be opened for writing due to unknown reasons.
      */
-    EXIT_MANY_FILES = 4,
+    EXIT_CANNOT_OPEN_FILE_OUT = 4,
+    /*
+     * Exit code 5 represents that more than 1 input files have been provided.
+     */
+    EXIT_MANY_FILES = 5,
     /*
      * Exit code 7 represents that an invalid command has been encountered.
      */
