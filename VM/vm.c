@@ -150,9 +150,9 @@ bool parser_push(int nargs, const char *args[nargs], char *output) {
     }
 
     if (!strcmp(args[1], "constant")) {
-        sprintf(output, ASM_PUSH_CONST_STATIC, "", i);
+        sprintf(output, ASM_PUSH_CONST, i);
     } else if (!strcmp(args[1], "static")) {
-        sprintf(output, ASM_PUSH_CONST_STATIC, fname_noext, i);
+        sprintf(output, ASM_PUSH_STATIC, fname_noext, i);
     } else if (!strcmp(args[1], "local")) {
         sprintf(output, ASM_PUSH_LATT, i, "LCL");
     } else if (!strcmp(args[1], "argument")) {

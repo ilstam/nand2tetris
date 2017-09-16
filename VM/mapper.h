@@ -1,12 +1,20 @@
 #pragma once
 
 
-#define ASM_PUSH_CONST_STATIC \
-    "@%s%d\n"                 \
-    "D=A\n"                   \
-    "@SP\n"                   \
-    "AM=M+1\n"                \
-    "A=A-1\n"                 \
+#define ASM_PUSH_CONST \
+    "@%d\n"            \
+    "D=A\n"            \
+    "@SP\n"            \
+    "AM=M+1\n"         \
+    "A=A-1\n"          \
+    "M=D\n"
+
+#define ASM_PUSH_STATIC \
+    "@%s%d\n"           \
+    "D=M\n"             \
+    "@SP\n"             \
+    "AM=M+1\n"          \
+    "A=A-1\n"           \
     "M=D\n"
 
 // local, argument, this, that
@@ -35,7 +43,6 @@
 
 #define ASM_PUSH_POINTER \
     "@%s\n"              \
-    "A=M\n"              \
     "D=M\n"              \
     "@SP\n"              \
     "AM=M+1\n"           \
