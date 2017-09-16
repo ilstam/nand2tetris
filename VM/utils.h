@@ -8,7 +8,7 @@
  *
  * \retval - true if string is only whitespace or NULL, else false.
  */
-bool is_empty(const char *s);
+bool s_is_empty(const char *s);
 
 /*
  * Tokenize a c-string, into variable size tokens.
@@ -20,3 +20,9 @@ bool is_empty(const char *s);
  * \retval - Number of tokens which s was broke to on success, else 0.
  */
 int s_tokenize(char *s, char *tokens[], int max_toks, const char *delims);
+
+/*
+ * Remove the extension from the given filename / path.
+ * Expect a mutable c-string as input.
+ */
+char *fname_remove_ext(char *s);

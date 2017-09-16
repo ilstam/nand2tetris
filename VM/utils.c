@@ -22,7 +22,7 @@ int s_tokenize(char *s, char *tokens[], int max_toks, const char *delims)
     return i;
 }
 
-bool is_empty(const char *s) {
+bool s_is_empty(const char *s) {
     if (s == NULL) {
         return true;
     }
@@ -32,4 +32,13 @@ bool is_empty(const char *s) {
     }
 
     return *s == '\0' ? true : false;
+}
+
+char *fname_remove_ext(char *s) {
+    char *last_dot = strrchr(s, '.');
+
+    if (last_dot != NULL) {
+        *last_dot = '\0';
+    }
+    return s;
 }

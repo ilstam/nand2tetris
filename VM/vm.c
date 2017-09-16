@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <libgen.h>
 #include <sys/stat.h>
 
 #include "mapper.h"
@@ -13,10 +15,14 @@
 #define MAX_ASM_OUT  1000
 /* Number of tokens of the command with the most tokens (out of all cmds). */
 #define MAX_TOKENS 3
+#define MAX_FNAME_CHARS 150
 
 static unsigned eq_label_counter = 0;
 static unsigned gt_label_counter = 0;
 static unsigned lt_label_counter = 0;
+
+char filename[MAX_FNAME_CHARS+1];       // name of input file (not full path)
+char filename_noext[MAX_FNAME_CHARS+1]; // filename without extension but with .
 
 
 typedef enum cmd_id {
@@ -128,8 +134,23 @@ bool parser_invalid(__attribute__((unused)) int nargs, __attribute__((unused)) c
     return true;
 }
 
-bool parser_push(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
-    puts("Push parser called!");
+bool parser_push(int nargs, const char *args[nargs], char *output) {
+    if (nargs != 3) {
+        return false;
+    }
+
+    char *endptr = NULL;
+    unsigned i = strtol(args[2], &endptr, 10);
+
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr) {
+        return false; // not a number
+    }
+
+    if (!strcmp(args[1], "constant")) {
+        sprintf(output, ASM_PUSH_CONST_STATIC, "", i);
+    } else if (!strcmp(args[1], "static")) {
+        sprintf(output, ASM_PUSH_CONST_STATIC, filename_noext, i);
+    }
     return true;
 }
 
@@ -190,8 +211,7 @@ bool parser_eq(int nargs, __attribute__((unused)) const char *args[nargs], char 
     if (nargs != 1) {
         return false;
     }
-    strcpy(output, ASM_EQ);
-    sprintf(output, output, eq_label_counter, eq_label_counter);
+    sprintf(output, ASM_EQ, eq_label_counter, eq_label_counter);
     eq_label_counter++;
     return true;
 }
@@ -200,8 +220,7 @@ bool parser_gt(int nargs, __attribute__((unused)) const char *args[nargs], char 
     if (nargs != 1) {
         return false;
     }
-    strcpy(output, ASM_GT);
-    sprintf(output, output, gt_label_counter, gt_label_counter);
+    sprintf(output, ASM_GT, gt_label_counter, gt_label_counter);
     gt_label_counter++;
     return true;
 }
@@ -210,8 +229,7 @@ bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char 
     if (nargs != 1) {
         return false;
     }
-    strcpy(output, ASM_LT);
-    sprintf(output, output, lt_label_counter, lt_label_counter);
+    sprintf(output, ASM_LT, lt_label_counter, lt_label_counter);
     lt_label_counter++;
     return true;
 }
@@ -221,6 +239,11 @@ int main(int argc, const char *argv[])
     if (argc != 2) {
         exit_program(EXIT_MANY_FILES);
     }
+
+    // store filename and filename_noext globals
+    strcpy(filename, basename(strncpy(filename, argv[1], MAX_FNAME_CHARS)));
+    filename[MAX_FNAME_CHARS] = '\0';
+    strcat(fname_remove_ext(strcpy(filename_noext, filename)), ".");
 
     /*
      * Holds current line read.
@@ -255,12 +278,12 @@ int main(int argc, const char *argv[])
     FILE *fp = file_open_or_bail(argv[1], "r");
 
     while (fgets(line, sizeof(line), fp)) {
-        strcpy(asm_output, "");
+        /*strcpy(asm_output, "");*/
         line_num++;
 
         strip_comments(line);
 
-        if (is_empty(line)) {
+        if (s_is_empty(line)) {
             continue; // skip empty lines
         }
 
@@ -268,15 +291,15 @@ int main(int argc, const char *argv[])
         ntokens = s_tokenize(tmp_line, tokens, MAX_TOKENS+1, " ");
         // ntokens should be at least 1 because we have skipped empty lines
         cmd_id cmdid = str_to_cmdid(tokens[0]);
-        puts(line);
+        /*puts(line);*/
         bool valid = parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
 
         if (!valid) {
             exit_program(EXIT_INVALID_COMMAND, line_num, line);
         }
 
-        puts(asm_output);
-        puts("---------");
+        printf(asm_output);
+        /*puts("---------");*/
     }
 
     fclose(fp);

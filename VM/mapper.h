@@ -1,6 +1,14 @@
 #pragma once
 
 
+#define ASM_PUSH_CONST_STATIC \
+    "@%s%d\n"                 \
+    "D=A\n"                   \
+    "@SP\n"                   \
+    "AM=M+1\n"                \
+    "A=A-1\n"                 \
+    "M=D\n"
+
 #define ASM_ADD \
     "@SP\n"     \
     "AM=M-1\n"  \
@@ -13,26 +21,26 @@
     "AM=M-1\n"  \
     "D=M\n"     \
     "A=A-1\n"   \
-    "M=M-D\n"   \
+    "M=M-D\n"
 
 #define ASM_NEG \
     "@SP\n"     \
     "A=M-1\n"   \
-    "M=-M\n"    \
+    "M=-M\n"
 
 #define ASM_AND \
     "@SP\n"     \
     "AM=M-1\n"  \
     "D=M\n"     \
     "A=A-1\n"   \
-    "M=DIM\n"   \
+    "M=D&M\n"
 
 #define ASM_OR  \
     "@SP\n"     \
     "AM=M-1\n"  \
     "D=M\n"     \
     "A=A-1\n"   \
-    "M=D&M\n"   \
+    "M=D|M\n"
 
 #define ASM_NOT \
     "@SP\n"     \
