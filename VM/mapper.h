@@ -10,7 +10,7 @@
     "M=D\n"
 
 #define ASM_PUSH_STATIC \
-    "@%s%d\n"           \
+    "@%s.%d\n"           \
     "D=M\n"             \
     "@SP\n"             \
     "AM=M+1\n"          \
@@ -53,7 +53,7 @@
     "@SP\n"            \
     "AM=M-1\n"         \
     "D=M\n"            \
-    "@%s%d\n"          \
+    "@%s.%d\n"          \
     "M=D\n"
 
 #define ASM_POP_LATT \
@@ -171,3 +171,17 @@
     "A=M-1\n"       \
     "M=0\n"         \
     "(LT_LBL_%d)\n"
+
+#define ASM_LABEL   \
+    "(%s$%s)\n"
+
+#define ASM_GOTO    \
+    "@%s$%s\n"      \
+    "0;JMP\n"
+
+#define ASM_IFGOTO  \
+    "@SP\n"         \
+    "AM=M-1\n"      \
+    "D=M\n"         \
+    "@%s$%s\n"      \
+    "D=D;JNE\n"

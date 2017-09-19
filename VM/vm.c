@@ -24,7 +24,7 @@ static unsigned gt_label_counter = 0;
 static unsigned lt_label_counter = 0;
 
 char fname[MAX_FNAME_CHARS+1];       // name of input file (not full path)
-char fname_noext[MAX_FNAME_CHARS+1]; // filename without extension but with .
+char fname_noext[MAX_FNAME_CHARS+1]; // filename without extension
 char path_out[MAX_FNAME_CHARS+1];    // full path of output file
 
 
@@ -41,6 +41,9 @@ typedef enum cmd_id {
     CMD_EQ,
     CMD_GT,
     CMD_LT,
+    CMD_LABEL,
+    CMD_GOTO,
+    CMD_IFGOTO,
     MAX_COMMANDS  /* their total count */
 } cmd_id;
 
@@ -71,6 +74,12 @@ cmd_id str_to_cmdid(const char *s)
         id = CMD_GT;
     } else if (!strcmp(s, "lt")) {
         id = CMD_LT;
+    } else if (!strcmp(s, "label")) {
+        id = CMD_LABEL;
+    } else if (!strcmp(s, "goto")) {
+        id = CMD_GOTO;
+    } else if (!strcmp(s, "if-goto")) {
+        id = CMD_IFGOTO;
     }
 
     return id;
@@ -298,6 +307,30 @@ bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char 
     return true;
 }
 
+bool parser_label(int nargs, const char *args[nargs], char *output) {
+    if (nargs != 2) {
+        return false;
+    }
+    sprintf(output, ASM_LABEL, fname_noext, args[1]);
+    return true;
+}
+
+bool parser_goto(int nargs, const char *args[nargs], __attribute__((unused)) char *output) {
+    if (nargs != 2) {
+        return false;
+    }
+    sprintf(output, ASM_GOTO, fname_noext, args[1]);
+    return true;
+}
+
+bool parser_ifgoto(int nargs, const char *args[nargs], __attribute__((unused)) char *output) {
+    if (nargs != 2) {
+        return false;
+    }
+    sprintf(output, ASM_IFGOTO, fname_noext, args[1]);
+    return true;
+}
+
 int main(int argc, const char *argv[])
 {
     if (argc != 2) {
@@ -307,12 +340,12 @@ int main(int argc, const char *argv[])
     // store fname, fname_noext and path_out globals
     strcpy(fname, basename(strncpy(fname, argv[1], MAX_FNAME_CHARS)));
     fname[MAX_FNAME_CHARS] = '\0';
-    strcat(fname_remove_ext(strcpy(fname_noext, fname)), ".");
+    fname_remove_ext(strcpy(fname_noext, fname));
     strcpy(path_out, dirname(strncpy(path_out, argv[1], MAX_FNAME_CHARS)));
     path_out[MAX_FNAME_CHARS] = '\0';
     strcat(path_out, "/");
     strcat(path_out, fname_noext);
-    strcat(path_out, "asm");
+    strcat(path_out, ".asm");
 
     /*
      * Holds current line read.
@@ -341,7 +374,8 @@ int main(int argc, const char *argv[])
         [CMD_POP] = parser_pop, [CMD_ADD] = parser_add, [CMD_SUB] = parser_sub,
         [CMD_NEG] = parser_neg, [CMD_AND] = parser_and, [CMD_OR] = parser_or,
         [CMD_NOT] = parser_not, [CMD_EQ] = parser_eq, [CMD_GT] = parser_gt,
-        [CMD_LT] = parser_lt
+        [CMD_LT] = parser_lt, [CMD_LABEL] = parser_label,
+        [CMD_GOTO] = parser_goto, [CMD_IFGOTO] = parser_ifgoto,
     };
 
     FILE *fp_input = file_open_or_bail(argv[1], "r");
