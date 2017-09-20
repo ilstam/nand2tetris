@@ -22,11 +22,12 @@
 #define MAX_FILENAME_LEN 1000
 #define VM_EXTENSION ".vm"
 
-#define PRINT_TO_FILE 0
+#define PRINT_TO_FILE 1
 
-static unsigned eq_label_counter = 0;
-static unsigned gt_label_counter = 0;
-static unsigned lt_label_counter = 0;
+unsigned eq_label_counter = 0;
+unsigned gt_label_counter = 0;
+unsigned lt_label_counter = 0;
+unsigned return_label_counter = 0;
 
 /* Name of current file being processed without extension. */
 char fname_noext[MAX_FNAME_CHARS+1];
@@ -54,6 +55,7 @@ typedef enum cmd_id {
     CMD_IFGOTO,
     CMD_FUNCTION,
     CMD_RETURN,
+    CMD_CALL,
     MAX_COMMANDS  /* their total count */
 } cmd_id;
 
@@ -94,6 +96,8 @@ cmd_id str_to_cmdid(const char *s)
         id = CMD_FUNCTION;
     } else if (!strcmp(s, "return")) {
         id = CMD_RETURN;
+    } else if (!strcmp(s, "call")) {
+        id = CMD_CALL;
     }
 
     return id;
@@ -209,7 +213,7 @@ bool parser_pop(int nargs, const char *args[nargs], char *output)
     } else if (!strcmp(args[1], "that")) {
         sprintf(output, ASM_POP_LATT, "THAT", i);
     } else if (!strcmp(args[1], "temp")) {
-        if (i < 1 || i > 8) {
+        if (i > 8) {
             return false;
         }
         sprintf(output, ASM_POP_TEMP, i);
@@ -355,12 +359,41 @@ bool parser_function(int nargs, const char *args[nargs], char *output)
 
     strcpy(current_fun, args[1]);
 
+    strcpy(output, "(");
+    strcat(output, args[1]);
+    strcat(output, ")\n");
+
     for (int i = 0; i < nvars; i++) {
         parser_push(3, (const char *[]) { "push", "constant", "0" }, tmp_output);
         strncat(output, tmp_output, MAX_ASM_OUT);
         output[MAX_ASM_OUT] = '\0';
     }
 
+    return true;
+}
+
+bool parser_call(int nargs, const char *args[nargs], char *output)
+{
+    if (nargs != 3) {
+        return false;
+    }
+
+    char *endptr = NULL;
+    int call_nargs = strtol(args[2], &endptr, 10);
+
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || call_nargs < 0) {
+        return false; // not a number
+    }
+
+    sprintf(output, ASM_CALL_P1, return_label_counter);
+
+    for (int i=0; i < call_nargs; i++) {
+        strcat(output, "D=D-1\n");
+    }
+
+    sprintf(output + strlen(output), ASM_CALL_P2, args[1], return_label_counter);
+
+    return_label_counter++;
     return true;
 }
 
@@ -497,7 +530,7 @@ int main(int argc, const char *argv[])
         [CMD_NOT] = parser_not, [CMD_EQ] = parser_eq, [CMD_GT] = parser_gt,
         [CMD_LT] = parser_lt, [CMD_LABEL] = parser_label, [CMD_GOTO] = parser_goto,
         [CMD_IFGOTO] = parser_ifgoto, [CMD_FUNCTION] = parser_function,
-        [CMD_RETURN] = parser_return
+        [CMD_RETURN] = parser_return, [CMD_CALL] = parser_call
     };
 
     num_files = files_to_translate(argv[1], filenames, MAX_FILES);
@@ -507,7 +540,7 @@ int main(int argc, const char *argv[])
     }
 
     #if PRINT_TO_FILE
-        FILE *fp_output = fopen(path_out, "w");
+        FILE *fp_output = fopen(path_out, "a");
         if (fp_output == NULL) {
             exit_program(EXIT_CANNOT_OPEN_FILE_OUT, path_out);
         }

@@ -233,3 +233,52 @@
     "@R14\n"       \
     "A=M\n"        \
     "0;JMP\n"
+
+#define ASM_CALL_P1      \
+    "@SP\n"              \
+    "D=M\n"              \
+    "@R13\n"             \
+    "M=D\n"              \
+    "@RETURN_LABEL$%d\n" \
+    "D=A\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"              \
+    "@LCL\n"             \
+    "D=M\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"              \
+    "@ARG\n"             \
+    "D=M\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"              \
+    "@THIS\n"            \
+    "D=M\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"              \
+    "@THAT\n"            \
+    "D=M\n"              \
+    "@SP\n"              \
+    "AM=M+1\n"           \
+    "A=A-1\n"            \
+    "M=D\n"              \
+    "@R13\n"             \
+    "D=M\n"
+
+#define ASM_CALL_P2      \
+    "@ARG\n"             \
+    "M=D\n"              \
+    "@SP\n"              \
+    "D=M\n"              \
+    "@LCL\n"             \
+    "M=D\n"              \
+    "@%s\n"              \
+    "0;JMP\n"            \
+    "(RETURN_LABEL$%d)\n"
