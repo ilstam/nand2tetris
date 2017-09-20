@@ -8,9 +8,9 @@ enum exitcode {
      */
     EXIT_FILE_DOES_NOT_EXIST = 1,
     /*
-     * Exit code 2 represents that input file is not a regular file.
+     * Exit code 2 represents that input file is not a regular file nor a directory.
      */
-    EXIT_NOT_REGULAR_FILE = 2,
+    EXIT_NOT_FILE_OR_DIR = 2,
     /*
      * Exit code 3 represents that input file couldn't be opened due to unknown reasons.
      */
@@ -20,9 +20,13 @@ enum exitcode {
      */
     EXIT_CANNOT_OPEN_FILE_OUT = 4,
     /*
-     * Exit code 5 represents that more than 1 input files have been provided.
+     * Exit code 5 represents that more than 1 arguments have been provided to the program.
      */
-    EXIT_MANY_FILES = 5,
+    EXIT_MANY_ARGS = 5,
+    /*
+     * Exit code 6 represents that no VM files found in given directory.
+     */
+    EXIT_NO_FILES_FOUND = 6,
     /*
      * Exit code 7 represents that an invalid command has been encountered.
      */

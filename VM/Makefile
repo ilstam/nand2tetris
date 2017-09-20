@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O -Wall -W -pedantic -ansi -std=c99 -ggdb3 -c -O0
+CFLAGS=-O -Wall -W -pedantic -ansi -std=gnu99 -ggdb3 -c -O0
 
 vm: vm.o utils.o exit.o
 	$(CC) -o vm vm.o utils.o exit.o

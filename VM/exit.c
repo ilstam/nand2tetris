@@ -7,10 +7,11 @@
 const char *error_messages[] =
 {
     [EXIT_FILE_DOES_NOT_EXIST] = "%s does not exist",
-    [EXIT_NOT_REGULAR_FILE] = "%s is not a regular file",
+    [EXIT_NOT_FILE_OR_DIR] = "%s is neither a regular file nor a dir",
     [EXIT_CANNOT_OPEN_FILE] = "Can't open file %s",
     [EXIT_CANNOT_OPEN_FILE_OUT] = "Can't open file for writing %s",
-    [EXIT_MANY_FILES] = "One and only one file operand is expected",
+    [EXIT_MANY_ARGS] = "One and only one file or dir operand is expected",
+    [EXIT_NO_FILES_FOUND] = "No VM files found in given directory",
     [EXIT_INVALID_COMMAND] = "Line %u: %s: Invalid command",
     [EXIT_OUT_OF_MEMORY] = "CRITICAL: Unable to allocate memory!",
 };

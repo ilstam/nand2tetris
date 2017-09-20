@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
+#include <dirent.h>
 #include <sys/stat.h>
 
 #include "mapper.h"
@@ -16,16 +17,23 @@
 /* Number of tokens of the command with the most tokens (out of all cmds). */
 #define MAX_TOKENS 3
 #define MAX_FNAME_CHARS 150
+/* Max number of vm files that VM translator can handle */
+#define MAX_FILES 100
+#define MAX_FILENAME_LEN 1000
+#define VM_EXTENSION ".vm"
 
-#define PRINT_TO_FILE 1
+#define PRINT_TO_FILE 0
 
 static unsigned eq_label_counter = 0;
 static unsigned gt_label_counter = 0;
 static unsigned lt_label_counter = 0;
 
-char fname[MAX_FNAME_CHARS+1];       // name of input file (not full path)
-char fname_noext[MAX_FNAME_CHARS+1]; // filename without extension
-char path_out[MAX_FNAME_CHARS+1];    // full path of output file
+/* Name of current file being processed without extension. */
+char fname_noext[MAX_FNAME_CHARS+1];
+/* Full path of output file. */
+char path_out[MAX_FNAME_CHARS+1];
+/* Name of current function that is being processed. */
+char current_fun[MAX_FNAME_CHARS+1];
 
 
 typedef enum cmd_id {
@@ -92,33 +100,10 @@ cmd_id str_to_cmdid(const char *s)
 }
 
 /*
- * Check whether the given path corresponds to a regular file and if that's
- * the case try to open the file using fopen.
- */
-FILE *file_open_or_bail(const char *filename, const char *mode)
-{
-    struct stat path_stat;
-
-    if (stat(filename, &path_stat) != 0) {
-        exit_program(EXIT_FILE_DOES_NOT_EXIST, filename);
-    }
-    if(!S_ISREG(path_stat.st_mode)) {
-        exit_program(EXIT_NOT_REGULAR_FILE, filename);
-    }
-
-    FILE *fp = fopen(filename, mode);
-
-    if (fp == NULL) {
-        exit_program(EXIT_CANNOT_OPEN_FILE, filename);
-    }
-
-    return fp;
-}
-
-/*
  * Strip a line from comments and remove trailing whitespace.
  */
-char *strip_comments(char *s) {
+char *strip_comments(char *s)
+{
     // sanity checks
     if (s == NULL) {
         return NULL;
@@ -148,11 +133,15 @@ char *strip_comments(char *s) {
 typedef bool (*parser_ptr)(int, const char **, char *);
 
 
-bool parser_invalid(__attribute__((unused)) int nargs, __attribute__((unused)) const char *args[nargs], __attribute__((unused)) char *output) {
+bool parser_invalid(__attribute__((unused)) int nargs,
+                    __attribute__((unused)) const char *args[nargs],
+                    __attribute__((unused)) char *output)
+{
     return false;
 }
 
-bool parser_push(int nargs, const char *args[nargs], char *output) {
+bool parser_push(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 3) {
         return false;
     }
@@ -196,7 +185,8 @@ bool parser_push(int nargs, const char *args[nargs], char *output) {
     return true;
 }
 
-bool parser_pop(int nargs, const char *args[nargs], char *output) {
+bool parser_pop(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 3) {
         return false;
     }
@@ -238,7 +228,8 @@ bool parser_pop(int nargs, const char *args[nargs], char *output) {
     return true;
 }
 
-bool parser_add(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_add(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -246,7 +237,8 @@ bool parser_add(int nargs, __attribute__((unused)) const char *args[nargs], char
     return true;
 }
 
-bool parser_sub(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_sub(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -254,7 +246,8 @@ bool parser_sub(int nargs, __attribute__((unused)) const char *args[nargs], char
     return true;
 }
 
-bool parser_neg(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_neg(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -262,7 +255,8 @@ bool parser_neg(int nargs, __attribute__((unused)) const char *args[nargs], char
     return true;
 }
 
-bool parser_and(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_and(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -270,7 +264,8 @@ bool parser_and(int nargs, __attribute__((unused)) const char *args[nargs], char
     return true;
 }
 
-bool parser_or(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_or(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -278,7 +273,8 @@ bool parser_or(int nargs, __attribute__((unused)) const char *args[nargs], char 
     return true;
 }
 
-bool parser_not(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_not(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -286,7 +282,8 @@ bool parser_not(int nargs, __attribute__((unused)) const char *args[nargs], char
     return true;
 }
 
-bool parser_eq(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_eq(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -295,7 +292,8 @@ bool parser_eq(int nargs, __attribute__((unused)) const char *args[nargs], char 
     return true;
 }
 
-bool parser_gt(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_gt(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -304,7 +302,8 @@ bool parser_gt(int nargs, __attribute__((unused)) const char *args[nargs], char 
     return true;
 }
 
-bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -313,31 +312,35 @@ bool parser_lt(int nargs, __attribute__((unused)) const char *args[nargs], char 
     return true;
 }
 
-bool parser_label(int nargs, const char *args[nargs], char *output) {
+bool parser_label(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 2) {
         return false;
     }
-    sprintf(output, ASM_LABEL, fname_noext, args[1]);
+    sprintf(output, ASM_LABEL, current_fun, args[1]);
     return true;
 }
 
-bool parser_goto(int nargs, const char *args[nargs], char *output) {
+bool parser_goto(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 2) {
         return false;
     }
-    sprintf(output, ASM_GOTO, fname_noext, args[1]);
+    sprintf(output, ASM_GOTO, current_fun, args[1]);
     return true;
 }
 
-bool parser_ifgoto(int nargs, const char *args[nargs], char *output) {
+bool parser_ifgoto(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 2) {
         return false;
     }
-    sprintf(output, ASM_IFGOTO, fname_noext, args[1]);
+    sprintf(output, ASM_IFGOTO, current_fun, args[1]);
     return true;
 }
 
-bool parser_function(int nargs, const char *args[nargs], char *output) {
+bool parser_function(int nargs, const char *args[nargs], char *output)
+{
     if (nargs != 3) {
         return false;
     }
@@ -350,6 +353,8 @@ bool parser_function(int nargs, const char *args[nargs], char *output) {
         return false; // not a number
     }
 
+    strcpy(current_fun, args[1]);
+
     for (int i = 0; i < nvars; i++) {
         parser_push(3, (const char *[]) { "push", "constant", "0" }, tmp_output);
         strncat(output, tmp_output, MAX_ASM_OUT);
@@ -359,7 +364,8 @@ bool parser_function(int nargs, const char *args[nargs], char *output) {
     return true;
 }
 
-bool parser_return(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+bool parser_return(int nargs, __attribute__((unused)) const char *args[nargs], char *output)
+{
     if (nargs != 1) {
         return false;
     }
@@ -367,22 +373,95 @@ bool parser_return(int nargs, __attribute__((unused)) const char *args[nargs], c
     return true;
 }
 
-int main(int argc, const char *argv[])
+/*
+ * If path is a directory put in files array all filenames of regular files
+ * contained in this directory that end in ".vm", or put path in files if it
+ * is a regular file.
+ *
+ * This function also sets the global path_out.
+ *
+ * \param path - path to be processed
+ * \param maxfiles - Maximum number of files to store in files array.
+ * \retval - Number of files that have been put in files array.
+ */
+int files_to_translate(const char *path, char files[][MAX_FILENAME_LEN+1], int maxfiles)
 {
-    if (argc != 2) {
-        exit_program(EXIT_MANY_FILES);
+    int num_files = 0;
+    bool is_dir = false;
+    struct stat path_stat;
+    char tmp[MAX_FNAME_CHARS+1];
+    char real_path[MAX_FNAME_CHARS+1] = {0};
+    char dir_name[MAX_FNAME_CHARS+1] = {0};
+    char base_name[MAX_FNAME_CHARS+1] = {0};
+
+    if (stat(path, &path_stat) != 0) {
+        exit_program(EXIT_FILE_DOES_NOT_EXIST, path);
+    } else if (S_ISREG(path_stat.st_mode)) {
+    } else if (S_ISDIR(path_stat.st_mode)) {
+        is_dir = true;
+    } else {
+        exit_program(EXIT_NOT_FILE_OR_DIR, path);
     }
 
-    // store fname, fname_noext and path_out globals
-    strcpy(fname, basename(strncpy(fname, argv[1], MAX_FNAME_CHARS)));
-    fname[MAX_FNAME_CHARS] = '\0';
-    fname_remove_ext(strcpy(fname_noext, fname));
-    strcpy(path_out, dirname(strncpy(path_out, argv[1], MAX_FNAME_CHARS)));
-    path_out[MAX_FNAME_CHARS] = '\0';
+    strcpy(real_path, realpath(path, tmp));
+    if (is_dir) {
+        strcpy(dir_name, real_path);
+    } else {
+        strcpy(dir_name, dirname(strcpy(tmp, real_path)));
+    }
+    strcpy(base_name, basename(strcpy(tmp, real_path)));
+
+    strcpy(path_out, dir_name);
     strcat(path_out, "/");
-    strcat(path_out, fname_noext);
+
+    if (is_dir) {
+        DIR *d;
+        struct dirent *dir;
+        char *dot, *slash;
+
+        if ((d = opendir(real_path))) {
+            while ((dir = readdir(d)) != NULL) {
+                dot = strrchr(dir->d_name, '.');
+
+                if (dir->d_type == DT_REG && dot && !strcmp(dot, VM_EXTENSION)) {
+                    strcpy(tmp, dir_name);
+                    strcat(tmp, "/");
+                    strcpy(files[num_files++], strcat(tmp, dir->d_name));
+                    if (num_files == maxfiles) {
+                        break;
+                    }
+                }
+            }
+            closedir(d);
+        }
+
+        slash = strrchr(dir_name, '/');
+        if (slash == NULL) {
+        }
+        strcat(path_out, slash+1);
+    } else {
+        strcpy(files[0], path);
+        num_files = 1;
+
+        fname_remove_ext(strcpy(tmp, base_name));
+        strcat(path_out, tmp);
+    }
+
     strcat(path_out, ".asm");
 
+    return num_files;
+}
+
+int main(int argc, const char *argv[])
+{
+    /*
+     * Number of files to be processed.
+     */
+    int num_files;
+    /*
+     * Names of files to be processed.
+     */
+    char filenames[MAX_FILES][1000+1];
     /*
      * Holds current line read.
      */
@@ -405,6 +484,12 @@ int main(int argc, const char *argv[])
      */
     int ntokens;
 
+    if (argc != 2) {
+        exit_program(EXIT_MANY_ARGS);
+    }
+
+    strcpy(current_fun, "OutOfFunction");
+
     parser_ptr parser_fn[MAX_COMMANDS] = {
         [CMD_INVALID] = parser_invalid, [CMD_PUSH] = parser_push,
         [CMD_POP] = parser_pop, [CMD_ADD] = parser_add, [CMD_SUB] = parser_sub,
@@ -415,7 +500,12 @@ int main(int argc, const char *argv[])
         [CMD_RETURN] = parser_return
     };
 
-    FILE *fp_input = file_open_or_bail(argv[1], "r");
+    num_files = files_to_translate(argv[1], filenames, MAX_FILES);
+
+    if (num_files == 0) {
+        exit_program(EXIT_NO_FILES_FOUND, path_out);
+    }
+
     #if PRINT_TO_FILE
         FILE *fp_output = fopen(path_out, "w");
         if (fp_output == NULL) {
@@ -423,33 +513,44 @@ int main(int argc, const char *argv[])
         }
     #endif
 
-    while (fgets(line, sizeof(line), fp_input)) {
-        line_num++;
-
-        strip_comments(line);
-
-        if (s_is_empty(line)) {
-            continue; // skip empty lines
+    for (int i = 0; i < num_files; i++) {
+        FILE *fp_input = fopen(filenames[i], "r");
+        if (fp_input == NULL) {
+            exit_program(EXIT_CANNOT_OPEN_FILE, filenames[i]);
         }
 
-        strcpy(tmp_line, line);
-        ntokens = s_tokenize(tmp_line, tokens, MAX_TOKENS+1, " ");
-        // ntokens should be at least 1 because we have skipped empty lines
-        cmd_id cmdid = str_to_cmdid(tokens[0]);
-        bool valid = parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
+        strcpy(fname_noext, basename(strcpy(fname_noext, filenames[i])));
+        fname_remove_ext(fname_noext);
 
-        if (!valid) {
-            exit_program(EXIT_INVALID_COMMAND, line_num, line);
+        while (fgets(line, sizeof(line), fp_input)) {
+            line_num++;
+
+            strip_comments(line);
+
+            if (s_is_empty(line)) {
+                continue; // skip empty lines
+            }
+
+            strcpy(tmp_line, line);
+            ntokens = s_tokenize(tmp_line, tokens, MAX_TOKENS+1, " ");
+            // ntokens should be at least 1 because we have skipped empty lines
+            cmd_id cmdid = str_to_cmdid(tokens[0]);
+            bool valid = parser_fn[cmdid](ntokens, (const char **) tokens, asm_output);
+
+            if (!valid) {
+                exit_program(EXIT_INVALID_COMMAND, line_num, line);
+            }
+
+            #if PRINT_TO_FILE
+                fprintf(fp_output, asm_output);
+            #else
+                printf(asm_output);
+            #endif
         }
 
-        #if PRINT_TO_FILE
-            fprintf(fp_output, asm_output);
-        #else
-            printf(asm_output);
-        #endif
+        fclose(fp_input);
     }
 
-    fclose(fp_input);
     #if PRINT_TO_FILE
         fclose(fp_output);
     #endif
