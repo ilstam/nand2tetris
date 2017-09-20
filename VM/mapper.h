@@ -1,5 +1,10 @@
 #pragma once
 
+#define ASM_BOOTSTRAP  \
+    "@256\n"           \
+    "D=A\n"            \
+    "@SP\n"            \
+    "M=D\n"
 
 #define ASM_PUSH_CONST \
     "@%d\n"            \

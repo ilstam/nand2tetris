@@ -406,6 +406,15 @@ bool parser_return(int nargs, __attribute__((unused)) const char *args[nargs], c
     return true;
 }
 
+void bootstrap_code(char *output)
+{
+    char tmp_output[MAX_ASM_OUT+1];
+    sprintf(output, ASM_BOOTSTRAP);
+    parser_call(3, (const char *[]) { "call", "Sys.init", "0" }, tmp_output);
+    strncat(output, tmp_output, MAX_ASM_OUT);
+    output[MAX_ASM_OUT] = '\0';
+}
+
 /*
  * If path is a directory put in files array all filenames of regular files
  * contained in this directory that end in ".vm", or put path in files if it
@@ -516,6 +525,7 @@ int main(int argc, const char *argv[])
      * Number of tokens of current line / command.
      */
     int ntokens;
+    FILE *fp_input, *fp_output;
 
     if (argc != 2) {
         exit_program(EXIT_MANY_ARGS);
@@ -539,16 +549,19 @@ int main(int argc, const char *argv[])
         exit_program(EXIT_NO_FILES_FOUND, path_out);
     }
 
+    bootstrap_code(asm_output);
+
     #if PRINT_TO_FILE
-        FILE *fp_output = fopen(path_out, "a");
-        if (fp_output == NULL) {
+        if ((fp_output = fopen(path_out, "a")) == NULL) {
             exit_program(EXIT_CANNOT_OPEN_FILE_OUT, path_out);
         }
+        fprintf(fp_output, asm_output);
+    #else
+        printf(asm_output);
     #endif
 
     for (int i = 0; i < num_files; i++) {
-        FILE *fp_input = fopen(filenames[i], "r");
-        if (fp_input == NULL) {
+        if ((fp_input = fopen(filenames[i], "r")) == NULL) {
             exit_program(EXIT_CANNOT_OPEN_FILE, filenames[i]);
         }
 
