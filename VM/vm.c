@@ -12,7 +12,7 @@
 
 #define MAX_LINE_LEN 200
 /* Max chars of generated assembly output for a single line/command. */
-#define MAX_ASM_OUT  1000
+#define MAX_ASM_OUT  2000
 /* Number of tokens of the command with the most tokens (out of all cmds). */
 #define MAX_TOKENS 3
 #define MAX_FNAME_CHARS 150
@@ -44,6 +44,8 @@ typedef enum cmd_id {
     CMD_LABEL,
     CMD_GOTO,
     CMD_IFGOTO,
+    CMD_FUNCTION,
+    CMD_RETURN,
     MAX_COMMANDS  /* their total count */
 } cmd_id;
 
@@ -80,6 +82,10 @@ cmd_id str_to_cmdid(const char *s)
         id = CMD_GOTO;
     } else if (!strcmp(s, "if-goto")) {
         id = CMD_IFGOTO;
+    } else if (!strcmp(s, "function")) {
+        id = CMD_FUNCTION;
+    } else if (!strcmp(s, "return")) {
+        id = CMD_RETURN;
     }
 
     return id;
@@ -315,7 +321,7 @@ bool parser_label(int nargs, const char *args[nargs], char *output) {
     return true;
 }
 
-bool parser_goto(int nargs, const char *args[nargs], __attribute__((unused)) char *output) {
+bool parser_goto(int nargs, const char *args[nargs], char *output) {
     if (nargs != 2) {
         return false;
     }
@@ -323,11 +329,41 @@ bool parser_goto(int nargs, const char *args[nargs], __attribute__((unused)) cha
     return true;
 }
 
-bool parser_ifgoto(int nargs, const char *args[nargs], __attribute__((unused)) char *output) {
+bool parser_ifgoto(int nargs, const char *args[nargs], char *output) {
     if (nargs != 2) {
         return false;
     }
     sprintf(output, ASM_IFGOTO, fname_noext, args[1]);
+    return true;
+}
+
+bool parser_function(int nargs, const char *args[nargs], char *output) {
+    if (nargs != 3) {
+        return false;
+    }
+
+    char *endptr = NULL;
+    int nvars = strtol(args[2], &endptr, 10);
+    char tmp_output[MAX_ASM_OUT+1];
+
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || nvars < 0) {
+        return false; // not a number
+    }
+
+    for (int i = 0; i < nvars; i++) {
+        parser_push(3, (const char *[]) { "push", "constant", "0" }, tmp_output);
+        strncat(output, tmp_output, MAX_ASM_OUT);
+        output[MAX_ASM_OUT] = '\0';
+    }
+
+    return true;
+}
+
+bool parser_return(int nargs, __attribute__((unused)) const char *args[nargs], char *output) {
+    if (nargs != 1) {
+        return false;
+    }
+    sprintf(output, ASM_RETURN);
     return true;
 }
 
@@ -374,8 +410,9 @@ int main(int argc, const char *argv[])
         [CMD_POP] = parser_pop, [CMD_ADD] = parser_add, [CMD_SUB] = parser_sub,
         [CMD_NEG] = parser_neg, [CMD_AND] = parser_and, [CMD_OR] = parser_or,
         [CMD_NOT] = parser_not, [CMD_EQ] = parser_eq, [CMD_GT] = parser_gt,
-        [CMD_LT] = parser_lt, [CMD_LABEL] = parser_label,
-        [CMD_GOTO] = parser_goto, [CMD_IFGOTO] = parser_ifgoto,
+        [CMD_LT] = parser_lt, [CMD_LABEL] = parser_label, [CMD_GOTO] = parser_goto,
+        [CMD_IFGOTO] = parser_ifgoto, [CMD_FUNCTION] = parser_function,
+        [CMD_RETURN] = parser_return
     };
 
     FILE *fp_input = file_open_or_bail(argv[1], "r");

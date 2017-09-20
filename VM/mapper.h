@@ -185,3 +185,51 @@
     "D=M\n"         \
     "@%s$%s\n"      \
     "D=D;JNE\n"
+
+#define ASM_RETURN \
+    "@LCL\n"       \
+    "D=M\n"        \
+    "@R13\n"       \
+    "M=D\n"        \
+    "D=M-1\n"      \
+    "D=D-1\n"      \
+    "D=D-1\n"      \
+    "D=D-1\n"      \
+    "D=D-1\n"      \
+    "A=D\n"        \
+    "D=M\n"        \
+    "@R14\n"       \
+    "M=D\n"        \
+    "@SP\n"        \
+    "A=M-1\n"      \
+    "D=M\n"        \
+    "@ARG\n"       \
+    "A=M\n"        \
+    "M=D\n"        \
+    "@ARG\n"       \
+    "D=M+1\n"      \
+    "@SP\n"        \
+    "M=D\n"        \
+    "@R13\n"       \
+    "AM=M-1\n"     \
+    "D=M\n"        \
+    "@THAT\n"      \
+    "M=D\n"        \
+    "@R13\n"       \
+    "AM=M-1\n"     \
+    "D=M\n"        \
+    "@THIS\n"      \
+    "M=D\n"        \
+    "@R13\n"       \
+    "AM=M-1\n"     \
+    "D=M\n"        \
+    "@ARG\n"       \
+    "M=D\n"        \
+    "@R13\n"       \
+    "AM=M-1\n"     \
+    "D=M\n"        \
+    "@LCL\n"       \
+    "M=D\n"        \
+    "@R14\n"       \
+    "A=M\n"        \
+    "0;JMP\n"
