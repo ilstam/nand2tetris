@@ -379,21 +379,15 @@ bool parser_call(int nargs, const char *args[nargs], char *output)
     }
 
     char *endptr = NULL;
-    int call_nargs = strtol(args[2], &endptr, 10);
+    int i = strtol(args[2], &endptr, 10);
 
-    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || call_nargs < 0) {
+    if (args[2] == endptr || errno != 0 || !args[2] || *endptr || i < 0) {
         return false; // not a number
     }
 
-    sprintf(output, ASM_CALL_P1, return_label_counter);
-
-    for (int i=0; i < call_nargs; i++) {
-        strcat(output, "D=D-1\n");
-    }
-
-    sprintf(output + strlen(output), ASM_CALL_P2, args[1], return_label_counter);
-
+    sprintf(output, ASM_CALL, return_label_counter, i, args[1], return_label_counter);
     return_label_counter++;
+
     return true;
 }
 

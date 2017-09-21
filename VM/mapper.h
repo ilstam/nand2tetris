@@ -196,11 +196,8 @@
     "D=M\n"        \
     "@R13\n"       \
     "M=D\n"        \
-    "D=M-1\n"      \
-    "D=D-1\n"      \
-    "D=D-1\n"      \
-    "D=D-1\n"      \
-    "D=D-1\n"      \
+    "@5\n"         \
+    "D=D-A\n"      \
     "A=D\n"        \
     "D=M\n"        \
     "@R14\n"       \
@@ -239,7 +236,7 @@
     "A=M\n"        \
     "0;JMP\n"
 
-#define ASM_CALL_P1      \
+#define ASM_CALL         \
     "@SP\n"              \
     "D=M\n"              \
     "@R13\n"             \
@@ -275,9 +272,9 @@
     "A=A-1\n"            \
     "M=D\n"              \
     "@R13\n"             \
-    "D=M\n"
-
-#define ASM_CALL_P2      \
+    "D=M\n"              \
+    "@%d\n"              \
+    "D=D-A\n"            \
     "@ARG\n"             \
     "M=D\n"              \
     "@SP\n"              \
