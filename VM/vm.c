@@ -559,7 +559,7 @@ int main(int argc, const char *argv[])
             exit_program(EXIT_CANNOT_OPEN_FILE, filenames[i]);
         }
 
-        strcpy(fname_noext, basename(strcpy(fname_noext, filenames[i])));
+        basename(strcpy(fname_noext, filenames[i]));
         fname_remove_ext(fname_noext);
 
         while (fgets(line, sizeof(line), fp_input)) {
